@@ -120,16 +120,16 @@ Feature: User Authentication
 ### ⚡ **One-Command Installation** (Recommended)
 ```bash
 # Initialize workflow in any repository
-npx claude-dev-workflow init
+npx @truefrontier/claude-dev-workflow init
 ```
 This interactive command automatically detects your project type (Node.js, PHP, Python, Rust, Go, Java, .NET) and configures everything: workflow files, labels, secrets, and project-specific commands.
 
 ### 📋 **Quick Commands**
 ```bash
-npx claude-dev-workflow help      # Detailed setup guide with platform detection
-npx claude-dev-workflow init      # Interactive setup wizard with project analysis
-npx claude-dev-workflow validate  # Check current configuration and project compatibility
-npx claude-dev-workflow labels --setup # Create workflow labels
+npx @truefrontier/claude-dev-workflow help      # Detailed setup guide with platform detection
+npx @truefrontier/claude-dev-workflow init      # Interactive setup wizard with project analysis
+npx @truefrontier/claude-dev-workflow validate  # Check current configuration and project compatibility
+npx @truefrontier/claude-dev-workflow labels --setup # Create workflow labels
 ```
 
 ### 🎯 **Platform-Agnostic Design**
@@ -153,7 +153,7 @@ If you prefer manual setup or need customization:
 
 1. **Copy workflow files** to `.github/workflows/` from this repository
 2. **Configure API secret**: `gh secret set ANTHROPIC_API_KEY`
-3. **Setup workflow labels**: `npx claude-dev-workflow labels --setup`
+3. **Setup workflow labels**: `npx @truefrontier/claude-dev-workflow labels --setup`
 4. **Add bot collaborator**: `gh repo add-collaborator claude-dev-truefrontier`
 5. **Test the system**: Create an issue and comment `@claude-dev-truefrontier`
 

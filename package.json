@@ -1,5 +1,5 @@
 {
-  "name": "claude-dev-workflow",
+  "name": "@truefrontier/claude-dev-workflow",
   "version": "1.0.0",
   "description": "An automated software development pipeline that uses Claude AI to guide issues through structured development stages with human oversight.",
   "keywords": [
@@ -33,7 +33,7 @@
     "setup:help": "node scripts/setup-help.js",
     "validate:workflows": "node scripts/validate-workflows.js",
     "docs:labels": "node -e \"console.log('\\nWorkflow Labels:\\n=============\\n\\n🔵 needs:* (AI working):\\n- needs:triage, needs:triage-revision\\n- needs:spec, needs:spec-revision\\n- needs:architect, needs:architect-revision\\n- needs:develop, needs:develop-revision\\n\\n🟢 review:* (human review):\\n- review:triage, review:spec\\n- review:architect, review:develop\\n\\n🔴 error:* (needs help):\\n- error:triage, error:spec\\n- error:architect, error:develop\\n\\nUsage: Only one workflow label should be active per issue at a time\\n');\"",
-    "postinstall": "echo '\\n🚀 Claude Dev Workflow installed!\\n\\nNext steps:\\n1. Run: npx claude-dev-workflow help\\n2. Initialize: npx claude-dev-workflow init\\n'"
+    "postinstall": "echo '\\n🚀 Claude Dev Workflow installed!\\n\\nNext steps:\\n1. Run: npx @truefrontier/claude-dev-workflow help\\n2. Initialize: npx @truefrontier/claude-dev-workflow init\\n'"
   },
   "engines": {
     "node": ">=14.0.0"
@@ -55,5 +55,8 @@
     "CLAUDE.md",
     "README.md",
     "LICENSE"
-  ]
+  ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  }
 }
