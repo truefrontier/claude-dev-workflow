@@ -1,6 +1,6 @@
 # GitHub Claude Workflow System
 
-The first AI-powered development pipeline that successfully combines intelligent automation with human oversight. Transform GitHub issues into production-ready features through structured stages with natural language control.
+An AI-powered development pipeline that successfully combines intelligent automation with human oversight. Transform GitHub issues into production-ready features through structured stages with natural language control.
 
 ## What It Does
 
