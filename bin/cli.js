@@ -11,7 +11,7 @@ const { labelsCommand } = require('../lib/commands/labels');
 const program = new Command();
 
 program
-  .name('github-claude-workflow')
+  .name('claude-dev-workflow')
   .description('AI-powered GitHub workflow automation with Claude')
   .version(version);
 

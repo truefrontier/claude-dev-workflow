@@ -7,7 +7,7 @@ const path = require('path');
 
 const cliPath = path.join(__dirname, 'bin', 'cli.js');
 
-console.log('🧪 Testing GitHub Claude Workflow CLI\n');
+console.log('🧪 Testing Claude Dev Workflow CLI\n');
 
 const tests = [
   {

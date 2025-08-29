@@ -120,17 +120,27 @@ Feature: User Authentication
 ### ⚡ **One-Command Installation** (Recommended)
 ```bash
 # Initialize workflow in any repository
-npx github-claude-workflow init
+npx claude-dev-workflow init
 ```
-This interactive command handles everything: copying workflow files, setting up labels, configuring secrets, and more.
+This interactive command automatically detects your project type (Node.js, PHP, Python, Rust, Go, Java, .NET) and configures everything: workflow files, labels, secrets, and project-specific commands.
 
 ### 📋 **Quick Commands**
 ```bash
-npx github-claude-workflow help      # Detailed setup guide
-npx github-claude-workflow init      # Interactive setup wizard
-npx github-claude-workflow validate  # Check current configuration
-npx github-claude-workflow labels --setup # Create workflow labels
+npx claude-dev-workflow help      # Detailed setup guide with platform detection
+npx claude-dev-workflow init      # Interactive setup wizard with project analysis
+npx claude-dev-workflow validate  # Check current configuration and project compatibility
+npx claude-dev-workflow labels --setup # Create workflow labels
 ```
+
+### 🎯 **Platform-Agnostic Design**
+The workflow system automatically detects and adapts to your project:
+- **Node.js**: Reads `package.json`, detects React/Vue/Angular/Express
+- **PHP**: Reads `composer.json`, detects Laravel/Symfony/CakePHP
+- **Python**: Reads `requirements.txt`/`pyproject.toml`, detects Django/Flask
+- **Rust**: Reads `Cargo.toml`, detects web frameworks
+- **Go**: Reads `go.mod`, detects Gin/Echo/Gorilla
+- **Java**: Reads `pom.xml`/`build.gradle`, detects Spring Boot
+- **.NET**: Reads `.csproj`, detects ASP.NET Core
 
 ### Prerequisites
 - **GitHub repository** with Issues enabled
@@ -143,7 +153,7 @@ If you prefer manual setup or need customization:
 
 1. **Copy workflow files** to `.github/workflows/` from this repository
 2. **Configure API secret**: `gh secret set ANTHROPIC_API_KEY`
-3. **Setup workflow labels**: `npx github-claude-workflow labels --setup`
+3. **Setup workflow labels**: `npx claude-dev-workflow labels --setup`
 4. **Add bot collaborator**: `gh repo add-collaborator claude-dev-truefrontier`
 5. **Test the system**: Create an issue and comment `@claude-dev-truefrontier`
 
