@@ -1,0 +1,144 @@
+name: Orchestrator Workflow
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  orchestrator:
+    if: >
+      github.event.issue.state == 'open' &&
+      contains(github.event.comment.body, '@claude-dev-truefrontier') &&
+      github.event.comment.user.type == 'User'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Get current issue state and prevent bot loops
+        id: check-state
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: issue } = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number
+            });
+            
+            // Prevent orchestrator from responding to its own comments or stage workflow comments
+            const comment = context.payload.comment;
+            const commentBody = comment.body;
+            const isFromBot = comment.user.login === 'github-actions[bot]';
+            
+            console.log('Comment user:', comment.user.login);
+            console.log('Comment is from bot:', isFromBot);
+            
+            if (isFromBot) {
+              console.log('Skipping - comment is from GitHub Actions bot');
+              core.setOutput('should_skip', 'true');
+              return;
+            }
+            
+            // Get current labels
+            const labels = issue.labels.map(label => label.name);
+            const workflowLabels = labels.filter(label => 
+              label.startsWith('needs:') || 
+              label.startsWith('review:') || 
+              label.startsWith('error:')
+            );
+            
+            console.log('Current labels:', labels);
+            console.log('Workflow labels:', workflowLabels);
+            console.log('Comment:', commentBody);
+            
+            // Store state for orchestrator logic
+            core.setOutput('current_labels', JSON.stringify(labels));
+            core.setOutput('workflow_labels', JSON.stringify(workflowLabels));
+            core.setOutput('comment_body', commentBody);
+            core.setOutput('comment_user', comment.user.login);
+            core.setOutput('should_skip', 'false');
+
+      - name: Run Orchestrator Logic
+        if: steps.check-state.outputs.should_skip == 'false'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          trigger_phrase: "@claude-dev-truefrontier"
+          use_sticky_comment: true
+          claude_args: |
+            --allowedTools "Bash(gh:*),Read,mcp__github_comment__create_comment,mcp__github_comment__update_claude_comment"
+            --max-turns 3
+            --model claude-3-5-haiku-20241022
+          prompt: |
+            You are the Orchestrator for a GitHub AI workflow system. Your job is to interpret human feedback and manage workflow state transitions.
+
+            <context>
+              <issue_number>${{ github.event.issue.number }}</issue_number>
+              <current_labels>${{ steps.check-state.outputs.current_labels }}</current_labels>
+              <workflow_labels>${{ steps.check-state.outputs.workflow_labels }}</workflow_labels>
+              <human_comment>${{ steps.check-state.outputs.comment_body }}</human_comment>
+              <human_user>${{ steps.check-state.outputs.comment_user }}</human_user>
+            </context>
+
+            ## Your Role
+            You interpret natural language from humans and manage the workflow state machine. The system has these states:
+            - `needs:*` - Stage is actively being worked on by @claude-dev-truefrontier
+            - `review:*` - Stage complete, awaiting human review (human assigned)
+            - `error:*` - Stage encountered error, needs human attention (human assigned)
+
+            ## State Transitions You Manage
+
+            ### From No Labels (Fresh Issue)
+            - Human mentions @claude-dev-truefrontier → Add `needs:triage`, assign @claude-dev-truefrontier
+
+            ### From review:* states
+            - Human approves → Remove `review:X`, add next `needs:Y`, assign @claude-dev-truefrontier
+            - Human requests changes → Remove `review:X`, add `needs:X-revision`, assign @claude-dev-truefrontier
+            - Human wants to skip stages → Remove `review:X`, add appropriate `needs:Y`, assign @claude-dev-truefrontier
+
+            ### From error:* states  
+            - Human says retry → Remove `error:X`, add `needs:X-revision`, assign @claude-dev-truefrontier
+            - Human says skip → Remove `error:X`, add next `needs:Y`, assign @claude-dev-truefrontier
+
+            ### Stop Commands
+            - Human says stop/unassign → Remove ALL workflow labels, unassign @claude-dev-truefrontier
+
+            ## Stage Flow Order
+            1. `triage` → `spec` → `architect` → `develop` (full flow)
+            2. Stages can be skipped: triage → develop (simple issues)
+            3. Spec and architect are optional, develop is required
+
+            ## Rules
+            1. ONLY ONE workflow label at a time per issue
+            2. `needs:*` labels mean @claude-dev-truefrontier is assigned
+            3. `review:*` and `error:*` labels mean human is assigned  
+            4. Always explain what you're doing in your response
+            5. If unclear, ask for clarification and don't change labels
+
+            ## Actions You Can Take
+            Use `gh issue edit` commands to:
+            - Add/remove labels: `--add-label "needs:triage"` or `--remove-label "review:triage"`
+            - Assign/unassign: `--add-assignee "claude-dev-truefrontier"` or `--remove-assignee "claude-dev-truefrontier"`
+            
+            ## CRITICAL ORDER: When transitioning to needs:* states
+            1. ALWAYS assign @claude-dev-truefrontier FIRST
+            2. THEN add the needs:* label
+            This ensures the assignee is in place before the stage workflow triggers on the label event.
+            
+            Example:
+            ```bash
+            # Step 1: Assign first
+            gh issue edit 123 --add-assignee "claude-dev-truefrontier"
+            # Step 2: Then add label (this will trigger the stage workflow)
+            gh issue edit 123 --add-label "needs:triage"
+            ```
+
+            ## Your Task
+            Based on the human comment and current state, determine the appropriate action and execute it. Always explain your reasoning and what transition you're making.

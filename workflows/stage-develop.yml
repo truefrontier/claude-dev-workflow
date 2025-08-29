@@ -1,0 +1,190 @@
+name: Stage - Development
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  development:
+    if: >
+      github.event.issue.state == 'open' && 
+      contains(github.event.issue.assignees.*.login, 'claude-dev-truefrontier') &&
+      (contains(github.event.issue.labels.*.name, 'needs:develop') ||
+       contains(github.event.issue.labels.*.name, 'needs:develop-revision'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      actions: read
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup stage context
+        id: setup
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: issue } = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number
+            });
+            
+            // Get all comments for comprehensive context
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              per_page: 30
+            });
+
+            // Filter out deleted/empty comments
+            const validComments = comments.data.filter(comment => 
+              comment.body && 
+              comment.body.trim() !== '' && 
+              !comment.body.includes('[DELETED]')
+            );
+
+            // Check if this is initial development or revision
+            const labels = issue.labels.map(label => label.name);
+            const isRevision = labels.includes('needs:develop-revision');
+            
+            // Find the last human who mentioned the bot
+            const lastHumanComment = validComments
+              .reverse()
+              .find(comment => 
+                comment.user.type === 'User' && 
+                comment.body.includes('@claude-dev-truefrontier')
+              );
+            
+            const lastHumanUser = lastHumanComment ? lastHumanComment.user.login : null;
+            core.setOutput('is_revision', isRevision.toString());
+            core.setOutput('issue_details', JSON.stringify({
+              ISSUE_NUMBER: context.issue.number,
+              ASSIGNEES: issue.assignees || [],
+              STATE: issue.state,
+              CREATED_AT: issue.created_at,
+              UPDATED_AT: issue.updated_at,
+            }));
+            core.setOutput('issue_description', issue.body || '');
+            core.setOutput('recent_comments', JSON.stringify(validComments));
+            core.setOutput('last_human_user', lastHumanUser);
+
+      - name: Run Development Implementation
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          branch_prefix: "feature/issue-${{ github.event.issue.number }}-"
+          use_sticky_comment: true
+          claude_args: |
+            --allowedTools "Bash(gh:*),Bash(git:*),Bash(composer:*),Bash(php:*),Bash(npm:*),Read,Glob,Grep,Edit,Write,MultiEdit,Task,mcp__github_comment__create_comment,mcp__github_comment__update_claude_comment"
+          prompt: |
+            You are acting as a Senior Software Engineer implementing features based on BDD specification and architecture design.
+
+            <context>
+              <issue_details>${{ steps.setup.outputs.issue_details }}</issue_details>
+              <issue_description>${{ steps.setup.outputs.issue_description }}</issue_description>
+              <recent_comments>${{ steps.setup.outputs.recent_comments }}</recent_comments>
+              <is_revision>${{ steps.setup.outputs.is_revision }}</is_revision>
+              <last_human_user>${{ steps.setup.outputs.last_human_user }}</last_human_user>
+            </context>
+
+            ## Your Task
+            ${{ steps.setup.outputs.is_revision == 'true' && '
+            This is a REVISION based on previous feedback. Review the recent comments for bug reports, test failures, or requested changes and address them.
+            ' || '
+            This is INITIAL DEVELOPMENT. Implement the complete feature based on approved BDD specification and architecture from previous comments.
+            ' }}
+
+            ## CRITICAL: Always Post Comment
+            You MUST post a comment with your development summary, test results, and implementation details. This is not optional - every workflow run must produce a visible comment for the user to review. Your development progress and results will automatically be posted as a comment to the issue.
+
+            ## Implementation Process
+
+            ### 1. Review Specifications
+            - Analyze approved BDD specification from issue comments
+            - Review architecture design decisions  
+            - Understand all approved requirements from triage
+
+            ### 2. Create Feature File
+            - Copy the approved Gherkin specification verbatim into a feature file
+            - Place in appropriate testing directory (tests/Feature/ or similar)
+            - Ensure .feature file matches the BDD spec exactly
+
+            ### 3. Test-Driven Development Cycle
+            1. **Write Tests First**: Create tests based on BDD scenarios
+            2. **Run Tests**: Execute `vendor/bin/phpunit` to see failures
+            3. **Implement Code**: Write minimal code to make tests pass
+            4. **Run Tests Again**: Verify tests pass
+            5. **Refactor**: Improve code quality while keeping tests passing
+            6. **Repeat**: Continue until all scenarios are implemented
+
+            ### 4. Integration and Final Testing
+            - Run complete test suite: `vendor/bin/phpunit`
+            - Fix any integration issues
+            - Ensure no existing tests are broken
+            - Verify all new functionality works end-to-end
+
+            ## Testing Requirements (Critical)
+            - **ALL tests must pass** before considering implementation complete
+            - If BDD .feature files exist, run Behat tests if available  
+            - Create comprehensive PHPUnit tests covering:
+              - Unit tests for business logic
+              - Feature tests for user workflows
+              - Integration tests for external dependencies
+            - **Iterate until 100% of tests pass** - do not accept failing tests
+
+            ## Code Quality Standards
+            - Follow PSR-12 coding standards
+            - Use Laravel conventions and patterns
+            - Implement proper error handling
+            - Add appropriate documentation
+            - No placeholder code or TODOs in final implementation
+
+            ## Git Workflow
+            - Create feature branch: `feature/issue-${{ github.event.issue.number }}-[description]`
+            - Make atomic commits with clear messages
+            - Follow conventional commit format when possible
+
+            ## Required Actions (Execute in Order)
+            
+            **1. FIRST: Always Post Your Development Summary Comment Above**
+            - Post a comprehensive development summary including:
+              - What was implemented (features, files changed, tests created)
+              - All test results (must show 100% passing tests)
+              - Branch name and commit details
+              - Any issues encountered and how they were resolved
+              - Final implementation status and readiness for PR
+              - **MUST INCLUDE: "Create a PR" link** using the format: `[Create a PR](https://github.com/${{ github.repository }}/compare/main...BRANCH_NAME)`
+            - This happens automatically when you include the summary in your response
+            - Do not proceed to step 2 until the comment is posted
+            
+            **2. THEN: Update Workflow State**
+            Only after successfully posting your development summary comment, execute these commands:
+
+            ```bash
+            # Remove the current stage label
+            gh issue edit ${{ github.event.issue.number }} \
+              --remove-label "needs:develop" \
+              --remove-label "needs:develop-revision"
+
+            # Set to review state and assign to human
+            gh issue edit ${{ github.event.issue.number }} \
+              --add-label "review:develop" \
+              --add-assignee "${{ steps.setup.outputs.last_human_user }}"
+            ```
+
+            ## Success Criteria
+            - All BDD scenarios are implemented and passing
+            - All PHPUnit tests pass (run `vendor/bin/phpunit`)
+            - Code follows Laravel best practices
+            - No breaking changes to existing functionality
+            - Feature branch is ready for PR creation
+            - Implementation is complete with no placeholder code
+
+            **Remember: This is the final implementation stage. Everything must be production-ready and fully tested before completion.**

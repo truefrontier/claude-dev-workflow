@@ -1,0 +1,46 @@
+{
+  "name": "github-claude-workflow",
+  "version": "1.0.0",
+  "description": "An automated software development pipeline that uses Claude AI to guide issues through structured development stages with human oversight.",
+  "keywords": [
+    "github",
+    "workflow",
+    "automation",
+    "claude",
+    "ai",
+    "development",
+    "pipeline",
+    "bdd",
+    "testing"
+  ],
+  "author": "True Frontier",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-org/github-claude-workflow.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/github-claude-workflow/issues"
+  },
+  "homepage": "https://github.com/your-org/github-claude-workflow#readme",
+  "scripts": {
+    "setup:labels": "node -e \"const os = require('os'); const { execSync } = require('child_process'); const script = os.platform() === 'win32' ? 'scripts/setup-labels.bat' : './scripts/setup-labels.sh'; try { execSync(script, { stdio: 'inherit' }); } catch (error) { console.error('Setup failed:', error.message); process.exit(1); }\"",
+    "setup:help": "node scripts/setup-help.js",
+    "validate:workflows": "node scripts/validate-workflows.js",
+    "docs:labels": "node -e \"console.log('\\nWorkflow Labels:\\n=============\\n\\n🔵 needs:* (AI working):\\n- needs:triage, needs:triage-revision\\n- needs:spec, needs:spec-revision\\n- needs:architect, needs:architect-revision\\n- needs:develop, needs:develop-revision\\n\\n🟢 review:* (human review):\\n- review:triage, review:spec\\n- review:architect, review:develop\\n\\n🔴 error:* (needs help):\\n- error:triage, error:spec\\n- error:architect, error:develop\\n\\nUsage: Only one workflow label should be active per issue at a time\\n');\"",
+    "postinstall": "echo '\\n🚀 GitHub Claude Workflow installed!\\n\\nNext steps:\\n1. Run: npm run setup:help\\n2. Setup labels: npm run setup:labels\\n3. Create an issue and mention @claude-dev-truefrontier\\n'"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0"
+  },
+  "files": [
+    "workflows/",
+    "scripts/",
+    "CLAUDE.md",
+    "README.md",
+    "LICENSE"
+  ]
+}
