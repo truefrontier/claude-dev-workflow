@@ -117,18 +117,19 @@ Feature: User Authentication
 
 ## Getting Started
 
-> **New to the system?** Start with `npm run setup:help` for a guided walkthrough with all prerequisites and decision points clearly explained.
-
-### Quick Start (2 minutes)
+### ⚡ **One-Command Installation** (Recommended)
 ```bash
-# Clone or download this repository
-git clone https://github.com/your-org/github-claude-workflow.git
-cd github-claude-workflow
+# Initialize workflow in any repository
+npx github-claude-workflow init
+```
+This interactive command handles everything: copying workflow files, setting up labels, configuring secrets, and more.
 
-# Run guided setup
-npm install
-npm run setup:help    # Shows prerequisites and walkthrough
-npm run setup:labels  # Creates required GitHub labels
+### 📋 **Quick Commands**
+```bash
+npx github-claude-workflow help      # Detailed setup guide
+npx github-claude-workflow init      # Interactive setup wizard
+npx github-claude-workflow validate  # Check current configuration
+npx github-claude-workflow labels --setup # Create workflow labels
 ```
 
 ### Prerequisites
@@ -137,25 +138,13 @@ npm run setup:labels  # Creates required GitHub labels
 - **Repository admin access** (for secrets and collaborator management)
 - **Anthropic API key** (get from console.anthropic.com)
 
-### Full Installation
-1. **Copy workflow files** to `.github/workflows/`
-2. **Configure API secret**:
-   ```bash
-   gh secret set ANTHROPIC_API_KEY
-   ```
-3. **Setup workflow labels**:
-   ```bash
-   # Recommended: Cross-platform npm approach
-   npm run setup:labels
-   
-   # Alternative: Direct script execution
-   ./scripts/setup-labels.sh      # Unix/Linux/macOS
-   scripts\setup-labels.bat       # Windows
-   ```
-4. **Add bot collaborator**:
-   ```bash
-   gh repo add-collaborator claude-dev-truefrontier
-   ```
+### Alternative: Manual Installation
+If you prefer manual setup or need customization:
+
+1. **Copy workflow files** to `.github/workflows/` from this repository
+2. **Configure API secret**: `gh secret set ANTHROPIC_API_KEY`
+3. **Setup workflow labels**: `npx github-claude-workflow labels --setup`
+4. **Add bot collaborator**: `gh repo add-collaborator claude-dev-truefrontier`
 5. **Test the system**: Create an issue and comment `@claude-dev-truefrontier`
 
 ### Configuration

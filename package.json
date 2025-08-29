@@ -11,7 +11,8 @@
     "development",
     "pipeline",
     "bdd",
-    "testing"
+    "testing",
+    "cli"
   ],
   "author": "True Frontier",
   "license": "MIT",
@@ -23,20 +24,32 @@
     "url": "https://github.com/your-org/github-claude-workflow/issues"
   },
   "homepage": "https://github.com/your-org/github-claude-workflow#readme",
+  "bin": {
+    "github-claude-workflow": "bin/cli.js"
+  },
+  "preferGlobal": false,
   "scripts": {
     "setup:labels": "node -e \"const os = require('os'); const { execSync } = require('child_process'); const script = os.platform() === 'win32' ? 'scripts/setup-labels.bat' : './scripts/setup-labels.sh'; try { execSync(script, { stdio: 'inherit' }); } catch (error) { console.error('Setup failed:', error.message); process.exit(1); }\"",
     "setup:help": "node scripts/setup-help.js",
     "validate:workflows": "node scripts/validate-workflows.js",
     "docs:labels": "node -e \"console.log('\\nWorkflow Labels:\\n=============\\n\\n🔵 needs:* (AI working):\\n- needs:triage, needs:triage-revision\\n- needs:spec, needs:spec-revision\\n- needs:architect, needs:architect-revision\\n- needs:develop, needs:develop-revision\\n\\n🟢 review:* (human review):\\n- review:triage, review:spec\\n- review:architect, review:develop\\n\\n🔴 error:* (needs help):\\n- error:triage, error:spec\\n- error:architect, error:develop\\n\\nUsage: Only one workflow label should be active per issue at a time\\n');\"",
-    "postinstall": "echo '\\n🚀 GitHub Claude Workflow installed!\\n\\nNext steps:\\n1. Run: npm run setup:help\\n2. Setup labels: npm run setup:labels\\n3. Create an issue and mention @claude-dev-truefrontier\\n'"
+    "postinstall": "echo '\\n🚀 GitHub Claude Workflow installed!\\n\\nNext steps:\\n1. Run: npx github-claude-workflow help\\n2. Initialize: npx github-claude-workflow init\\n'"
   },
   "engines": {
     "node": ">=14.0.0"
   },
   "dependencies": {
-    "js-yaml": "^4.1.0"
+    "js-yaml": "^4.1.0",
+    "inquirer": "^8.2.6",
+    "chalk": "^4.1.2",
+    "fs-extra": "^10.1.0",
+    "ora": "^5.4.1",
+    "commander": "^9.4.1"
   },
   "files": [
+    "bin/",
+    "lib/", 
+    "templates/",
     "workflows/",
     "scripts/",
     "CLAUDE.md",
