@@ -152,7 +152,7 @@ The workflow system automatically detects and adapts to your project:
 ### Alternative: Manual Installation
 If you prefer manual setup or need customization:
 
-1. **Install Claude GitHub App**: Visit [github.com/apps/claude](https://github.com/apps/claude) and install on your repository
+1. **Install Claude GitHub App**: The `init` command automatically opens the installation URL, or visit [github.com/apps/claude](https://github.com/apps/claude) manually
 2. **Copy workflow files** to `.github/workflows/` from this repository
 3. **Configure API secret**: `gh secret set ANTHROPIC_API_KEY`
 4. **Setup workflow labels**: `npx @truefrontier/claude-dev-workflow labels --setup`
