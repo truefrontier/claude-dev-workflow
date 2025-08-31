@@ -72,6 +72,7 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           trigger_phrase: "@claude-dev-truefrontier"
           use_sticky_comment: true
+          allowed_bots: 'claude[bot]'
           claude_args: |
             --allowedTools "Bash(gh:*),Read,mcp__github_comment__create_comment,mcp__github_comment__update_claude_comment"
           prompt: |
