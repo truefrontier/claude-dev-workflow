@@ -89,26 +89,26 @@ jobs:
 
             ## Your Role
             You interpret natural language from humans and manage the workflow state machine. The system has these states:
-            - `needs:*` - Stage is actively being worked on by @claude-dev-truefrontier
+            - `needs:*` - Stage is actively being worked on by @claude-dev-truefrontier (if user exists)
             - `review:*` - Stage complete, awaiting human review (human assigned)
             - `error:*` - Stage encountered error, needs human attention (human assigned)
 
             ## State Transitions You Manage
 
             ### From No Labels (Fresh Issue)
-            - Human mentions @claude-dev-truefrontier → Add `needs:triage`, assign @claude-dev-truefrontier
+            - Human mentions @claude-dev-truefrontier → Add `needs:triage`, assign @claude-dev-truefrontier if user exists
 
             ### From review:* states
-            - Human approves → Remove `review:X`, add next `needs:Y`, assign @claude-dev-truefrontier
-            - Human requests changes → Remove `review:X`, add `needs:X-revision`, assign @claude-dev-truefrontier
-            - Human wants to skip stages → Remove `review:X`, add appropriate `needs:Y`, assign @claude-dev-truefrontier
+            - Human approves → Remove `review:X`, add next `needs:Y`, assign @claude-dev-truefrontier if user exists
+            - Human requests changes → Remove `review:X`, add `needs:X-revision`, assign @claude-dev-truefrontier if user exists
+            - Human wants to skip stages → Remove `review:X`, add appropriate `needs:Y`, assign @claude-dev-truefrontier if user exists
 
             ### From error:* states  
-            - Human says retry → Remove `error:X`, add `needs:X-revision`, assign @claude-dev-truefrontier
-            - Human says skip → Remove `error:X`, add next `needs:Y`, assign @claude-dev-truefrontier
+            - Human says retry → Remove `error:X`, add `needs:X-revision`, assign @claude-dev-truefrontier if user exists
+            - Human says skip → Remove `error:X`, add next `needs:Y`, assign @claude-dev-truefrontier if user exists
 
             ### Stop Commands
-            - Human says stop/unassign → Remove ALL workflow labels, unassign @claude-dev-truefrontier
+            - Human says stop/unassign → Remove ALL workflow labels, unassign @claude-dev-truefrontier if assigned
 
             ## Stage Flow Order
             1. `triage` → `spec` → `architect` → `develop` (full flow)
@@ -117,7 +117,7 @@ jobs:
 
             ## Rules
             1. ONLY ONE workflow label at a time per issue
-            2. `needs:*` labels mean @claude-dev-truefrontier is assigned
+            2. `needs:*` labels mean @claude-dev-truefrontier is assigned (if user exists)
             3. `review:*` and `error:*` labels mean human is assigned  
             4. Always explain what you're doing in your response
             5. If unclear, ask for clarification and don't change labels
@@ -127,18 +127,30 @@ jobs:
             - Add/remove labels: `--add-label "needs:triage"` or `--remove-label "review:triage"`
             - Assign/unassign: `--add-assignee "claude-dev-truefrontier"` or `--remove-assignee "claude-dev-truefrontier"`
             
-            ## CRITICAL ORDER: When transitioning to needs:* states
-            1. ALWAYS assign @claude-dev-truefrontier FIRST
-            2. THEN add the needs:* label
-            This ensures the assignee is in place before the stage workflow triggers on the label event.
+            ## CRITICAL: User Assignment Check
+            BEFORE attempting to assign @claude-dev-truefrontier, you MUST check if this user can be assigned:
+            1. First try: `gh api repos/${{ github.repository }}/assignees/claude-dev-truefrontier 2>/dev/null`
+            2. If the command returns successfully (exit code 0), the user exists and can be assigned
+            3. If it fails (exit code non-zero), skip the assignment step
             
-            Example:
+            ## ORDER: When transitioning to needs:* states
+            1. Check if claude-dev-truefrontier user can be assigned (see above)
+            2. If user exists: assign @claude-dev-truefrontier FIRST
+            3. THEN add the needs:* label (this triggers the stage workflow)
+            
+            Example with user check:
             ```bash
-            # Step 1: Assign first
-            gh issue edit 123 --add-assignee "claude-dev-truefrontier"
-            # Step 2: Then add label (this will trigger the stage workflow)
+            # Step 1: Check if user can be assigned
+            if gh api repos/${{ github.repository }}/assignees/claude-dev-truefrontier 2>/dev/null; then
+              echo "User exists, will assign"
+              # Step 2: Assign first (only if user exists)
+              gh issue edit 123 --add-assignee "claude-dev-truefrontier"
+            else
+              echo "User claude-dev-truefrontier not found or cannot be assigned, skipping assignment"
+            fi
+            # Step 3: Add label (always do this, regardless of assignment)
             gh issue edit 123 --add-label "needs:triage"
             ```
 
             ## Your Task
-            Based on the human comment and current state, determine the appropriate action and execute it. Always explain your reasoning and what transition you're making.
+            Based on the human comment and current state, determine the appropriate action and execute it. Always explain your reasoning and what transition you're making. When assigning users, always check if they can be assigned first.
