@@ -74,8 +74,6 @@ jobs:
           use_sticky_comment: true
           claude_args: |
             --allowedTools "Bash(gh:*),Read,mcp__github_comment__create_comment,mcp__github_comment__update_claude_comment"
-            --max-turns 3
-            --model claude-3-5-haiku-20241022
           prompt: |
             You are the Orchestrator for a GitHub AI workflow system. Your job is to interpret human feedback and manage workflow state transitions.
 
