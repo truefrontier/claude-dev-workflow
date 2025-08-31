@@ -145,17 +145,19 @@ The workflow system automatically detects and adapts to your project:
 ### Prerequisites
 - **GitHub repository** with Issues enabled
 - **GitHub CLI** (`gh`) installed and authenticated
+- **Claude GitHub App** installed on your repository ([github.com/apps/claude](https://github.com/apps/claude))
 - **Repository admin access** (for secrets and collaborator management)
 - **Anthropic API key** (get from console.anthropic.com)
 
 ### Alternative: Manual Installation
 If you prefer manual setup or need customization:
 
-1. **Copy workflow files** to `.github/workflows/` from this repository
-2. **Configure API secret**: `gh secret set ANTHROPIC_API_KEY`
-3. **Setup workflow labels**: `npx @truefrontier/claude-dev-workflow labels --setup`
-4. **Add bot collaborator**: `gh repo add-collaborator claude-dev-truefrontier`
-5. **Test the system**: Create an issue and comment `@claude-dev-truefrontier`
+1. **Install Claude GitHub App**: Visit [github.com/apps/claude](https://github.com/apps/claude) and install on your repository
+2. **Copy workflow files** to `.github/workflows/` from this repository
+3. **Configure API secret**: `gh secret set ANTHROPIC_API_KEY`
+4. **Setup workflow labels**: `npx @truefrontier/claude-dev-workflow labels --setup`
+5. **Add bot collaborator**: `gh repo add-collaborator claude-dev-truefrontier` (if user exists)
+6. **Test the system**: Create an issue and comment `@claude-dev-truefrontier`
 
 ### Configuration
 Each workflow can be customized by modifying:
