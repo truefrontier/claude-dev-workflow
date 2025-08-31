@@ -7,8 +7,7 @@ on:
 jobs:
   development:
     if: >
-      github.event.issue.state == 'open' && 
-      contains(github.event.issue.assignees.*.login, 'claude-dev-truefrontier') &&
+      github.event.issue.state == 'open' &&
       (contains(github.event.issue.labels.*.name, 'needs:develop') ||
        contains(github.event.issue.labels.*.name, 'needs:develop-revision'))
     runs-on: ubuntu-latest

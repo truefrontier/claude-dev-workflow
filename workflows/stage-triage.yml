@@ -7,8 +7,7 @@ on:
 jobs:
   triage:
     if: >
-      github.event.issue.state == 'open' && 
-      contains(github.event.issue.assignees.*.login, 'claude-dev-truefrontier') &&
+      github.event.issue.state == 'open' &&
       (contains(github.event.issue.labels.*.name, 'needs:triage') ||
        contains(github.event.issue.labels.*.name, 'needs:triage-revision'))
     runs-on: ubuntu-latest

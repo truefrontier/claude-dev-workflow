@@ -7,8 +7,7 @@ on:
 jobs:
   architecture:
     if: >
-      github.event.issue.state == 'open' && 
-      contains(github.event.issue.assignees.*.login, 'claude-dev-truefrontier') &&
+      github.event.issue.state == 'open' &&
       (contains(github.event.issue.labels.*.name, 'needs:architect') ||
        contains(github.event.issue.labels.*.name, 'needs:architect-revision'))
     runs-on: ubuntu-latest
