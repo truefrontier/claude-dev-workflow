@@ -82,7 +82,7 @@ jobs:
           use_sticky_comment: true
           allowed_bots: 'claude[bot]'
           claude_args: |
-            --allowedTools "Bash,Edit,MultiEdit,Write,Glob,Grep,Read,Task,WebFetch,WebSearch,mcp__github__get_issue_comments,mcp__github__add_issue_comment,mcp__github__create_branch,mcp__github__create_pull_request"
+            --allowedTools "Bash,Edit,MultiEdit,NotebookEdit,WebFetch,WebSearch,Write,mcp__github_comment__create_comment,mcp__github_comment__update_claude_comment,mcp__github__get_issue_comments"
           prompt: |
             You are acting as a Senior Software Engineer implementing features based on specifications, technical plan, and task breakdown.
 

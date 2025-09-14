@@ -75,7 +75,7 @@ jobs:
           use_sticky_comment: true
           allowed_bots: 'claude[bot]'
           claude_args: |
-            --allowedTools "mcp__github__get_issue,mcp__github__update_issue,mcp__github__get_issue_comments,mcp__github__add_issue_comment"
+            --allowedTools "Read,mcp__github_comment__create_comment,mcp__github_comment__update_claude_comment,mcp__github__*"
           prompt: |
             You are the Orchestrator for a GitHub AI workflow system. Your job is to interpret human feedback and manage workflow state transitions.
 
