@@ -80,7 +80,7 @@ jobs:
           use_sticky_comment: true
           allowed_bots: 'claude[bot]'
           claude_args: |
-            --allowedTools "Glob,Grep,Read,mcp__github__get_issue_comments,mcp__github__add_issue_comment"
+            --allowedTools "Glob,Grep,Read,TodoWrite,mcp__github__get_issue_comments,mcp__github__add_issue_comment"
           prompt: |
             You are breaking down technical implementation plans into specific, actionable development tasks.
 

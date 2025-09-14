@@ -80,7 +80,7 @@ jobs:
           use_sticky_comment: true
           allowed_bots: 'claude[bot]'
           claude_args: |
-            --allowedTools "WebFetch,WebSearch,Glob,Grep,Read,Task,mcp__github__get_issue_comments,mcp__github__add_issue_comment"
+            --allowedTools "WebFetch,WebSearch,Glob,Grep,Read,Task,TodoWrite,mcp__github__get_issue_comments,mcp__github__add_issue_comment"
           prompt: |
             You are creating detailed software specifications following the GitHub spec-kit methodology.
 
