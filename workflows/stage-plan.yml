@@ -80,7 +80,7 @@ jobs:
           use_sticky_comment: true
           allowed_bots: 'claude[bot]'
           claude_args: |
-            --allowedTools "WebFetch,WebSearch,Glob,Grep,Read,Task,TodoWrite,mcp__github__get_issue_comments,mcp__github__add_issue_comment"
+            --allowedTools "WebFetch,WebSearch,Glob,Grep,Read,Task,TodoWrite,mcp__github__get_issue,mcp__github__get_issue_comments,mcp__github__add_issue_comment,mcp__github__update_issue"
           prompt: |
             You are creating technical implementation plans following the GitHub spec-kit methodology.
 
@@ -237,16 +237,12 @@ jobs:
             **2. THEN: Update Workflow State**
             Only after successfully posting your technical plan comment, execute these commands:
 
-            ```bash
-            # Remove the current stage label
-            gh issue edit ${{ github.event.issue.number }} \
-              --remove-label "needs:plan" \
-              --remove-label "needs:plan-revision"
+            Use `mcp__github__update_issue` with these parameters:
+            - issue_number: ${{ github.event.issue.number }}
+            - Remove "needs:plan" and "needs:plan-revision" from labels
+            - Add "review:plan" to labels
+            - Add assignee: "${{ steps.setup.outputs.last_human_user }}"
 
-            # Set to review state and assign to human
-            gh issue edit ${{ github.event.issue.number }} \
-              --add-label "review:plan" \
-              --add-assignee "${{ steps.setup.outputs.last_human_user }}"
-            ```
+            First get current issue state with `mcp__github__get_issue`, then call `mcp__github__update_issue` with the updated labels list (keeping all non-workflow labels and adding review:plan).
 
             Focus on practical, implementable technical solutions that align with the project's existing architecture and constraints. Use web research to validate technology choices and discover best practices.

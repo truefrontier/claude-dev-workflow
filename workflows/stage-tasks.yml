@@ -80,7 +80,7 @@ jobs:
           use_sticky_comment: true
           allowed_bots: 'claude[bot]'
           claude_args: |
-            --allowedTools "Glob,Grep,Read,TodoWrite,mcp__github__get_issue_comments,mcp__github__add_issue_comment"
+            --allowedTools "Glob,Grep,Read,TodoWrite,mcp__github__get_issue,mcp__github__get_issue_comments,mcp__github__add_issue_comment,mcp__github__update_issue"
           prompt: |
             You are breaking down technical implementation plans into specific, actionable development tasks.
 
@@ -259,16 +259,12 @@ jobs:
             **2. THEN: Update Workflow State**
             Only after successfully posting your task breakdown comment, execute these commands:
 
-            ```bash
-            # Remove the current stage label
-            gh issue edit ${{ github.event.issue.number }} \
-              --remove-label "needs:tasks" \
-              --remove-label "needs:tasks-revision"
+            Use `mcp__github__update_issue` with these parameters:
+            - issue_number: ${{ github.event.issue.number }}
+            - Remove "needs:tasks" and "needs:tasks-revision" from labels
+            - Add "review:tasks" to labels
+            - Add assignee: "${{ steps.setup.outputs.last_human_user }}"
 
-            # Set to review state and assign to human
-            gh issue edit ${{ github.event.issue.number }} \
-              --add-label "review:tasks" \
-              --add-assignee "${{ steps.setup.outputs.last_human_user }}"
-            ```
+            First get current issue state with `mcp__github__get_issue`, then call `mcp__github__update_issue` with the updated labels list (keeping all non-workflow labels and adding review:tasks).
 
             Focus on creating specific, actionable tasks that a developer can follow step-by-step. Each task should clearly specify what file to modify and what changes to make. Use your analysis of the existing codebase to ensure tasks are realistic and properly scoped.

@@ -80,7 +80,7 @@ jobs:
           use_sticky_comment: true
           allowed_bots: 'claude[bot]'
           claude_args: |
-            --allowedTools "WebFetch,WebSearch,Glob,Grep,Read,Task,TodoWrite,mcp__github__get_issue_comments,mcp__github__add_issue_comment"
+            --allowedTools "WebFetch,WebSearch,Glob,Grep,Read,Task,TodoWrite,mcp__github__get_issue,mcp__github__get_issue_comments,mcp__github__add_issue_comment,mcp__github__update_issue"
           prompt: |
             You are creating detailed software specifications following the GitHub spec-kit methodology.
 
@@ -192,18 +192,14 @@ jobs:
             - Do not proceed to step 2 until you have successfully posted the comment using the MCP tool
 
             **2. THEN: Update Workflow State**
-            Only after successfully posting your specification comment, execute these commands:
+            Only after successfully posting your specification comment, use GitHub MCP tools to transition labels:
 
-            ```bash
-            # Remove the current stage label
-            gh issue edit ${{ github.event.issue.number }} \
-              --remove-label "needs:specify" \
-              --remove-label "needs:specify-revision"
+            Use `mcp__github__update_issue` with these parameters:
+            - issue_number: ${{ github.event.issue.number }}
+            - Remove \"needs:specify\" and \"needs:specify-revision\" from labels
+            - Add \"review:specify\" to labels
+            - Add assignee: "${{ steps.setup.outputs.last_human_user }}"
 
-            # Set to review state and assign to human
-            gh issue edit ${{ github.event.issue.number }} \
-              --add-label "review:specify" \
-              --add-assignee "${{ steps.setup.outputs.last_human_user }}"
-            ```
+            First get current issue state with `mcp__github__get_issue`, then call `mcp__github__update_issue` with the updated labels list (keeping all non-workflow labels and adding review:specify).
 
             Focus on intent-driven requirements that clearly articulate user needs and business value. Use web research as needed to understand best practices and gather requirements insights.

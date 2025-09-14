@@ -82,7 +82,7 @@ jobs:
           use_sticky_comment: true
           allowed_bots: 'claude[bot]'
           claude_args: |
-            --allowedTools "Bash,Edit,MultiEdit,Write,Glob,Grep,Read,Task,TodoWrite,WebFetch,WebSearch,mcp__github__get_issue_comments,mcp__github__add_issue_comment,mcp__github__create_branch,mcp__github__create_pull_request"
+            --allowedTools "Bash,Edit,MultiEdit,Write,Glob,Grep,Read,Task,TodoWrite,WebFetch,WebSearch,mcp__github__get_issue,mcp__github__get_issue_comments,mcp__github__add_issue_comment,mcp__github__update_issue,mcp__github__create_branch,mcp__github__create_pull_request"
           prompt: |
             You are acting as a Senior Software Engineer implementing features based on specifications, technical plan, and task breakdown.
 
@@ -183,17 +183,13 @@ jobs:
             **2. THEN: Update Workflow State**
             Only after successfully posting your development summary comment, execute these commands:
 
-            ```bash
-            # Remove the current stage label
-            gh issue edit ${{ github.event.issue.number }} \
-              --remove-label "needs:develop" \
-              --remove-label "needs:develop-revision"
+            Use `mcp__github__update_issue` with these parameters:
+            - issue_number: ${{ github.event.issue.number }}
+            - Remove "needs:develop" and "needs:develop-revision" from labels
+            - Add "review:develop" to labels
+            - Add assignee: "${{ steps.setup.outputs.last_human_user }}"
 
-            # Set to review state and assign to human
-            gh issue edit ${{ github.event.issue.number }} \
-              --add-label "review:develop" \
-              --add-assignee "${{ steps.setup.outputs.last_human_user }}"
-            ```
+            First get current issue state with `mcp__github__get_issue`, then call `mcp__github__update_issue` with the updated labels list (keeping all non-workflow labels and adding review:develop).
 
             ## Success Criteria
             - All specified requirements are implemented and working
