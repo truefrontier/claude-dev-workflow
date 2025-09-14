@@ -1,0 +1,252 @@
+name: Stage - Plan
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  plan:
+    if: >
+      github.event.issue.state == 'open' &&
+      (contains(github.event.issue.labels.*.name, 'needs:plan') ||
+       contains(github.event.issue.labels.*.name, 'needs:plan-revision'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      actions: read
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup stage context
+        id: setup
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: issue } = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number
+            });
+
+            // Get recent comments for context
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              per_page: 20
+            });
+
+            // Filter out deleted/empty comments and get non-bot comments
+            const validComments = comments.data.filter(comment =>
+              comment.body &&
+              comment.body.trim() !== '' &&
+              !comment.body.includes('[DELETED]')
+            );
+
+            // Check if this is initial plan or revision
+            const labels = issue.labels.map(label => label.name);
+            const isRevision = labels.includes('needs:plan-revision');
+
+            // Find the last human who mentioned the bot (for assignment later)
+            const lastHumanComment = validComments
+              .reverse()
+              .find(comment =>
+                comment.user.type === 'User' &&
+                comment.body.includes('@claude-dev-truefrontier')
+              );
+
+            const lastHumanUser = lastHumanComment ? lastHumanComment.user.login : null;
+            core.setOutput('is_revision', isRevision.toString());
+            core.setOutput('issue_details', JSON.stringify({
+              ISSUE_NUMBER: context.issue.number,
+              ASSIGNEES: issue.assignees || [],
+              STATE: issue.state,
+              CREATED_AT: issue.created_at,
+              UPDATED_AT: issue.updated_at,
+            }));
+            core.setOutput('issue_description', issue.body || '');
+            core.setOutput('recent_comments', JSON.stringify(validComments));
+            core.setOutput('last_human_user', lastHumanUser);
+
+      - name: Run Technical Planning
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          use_sticky_comment: true
+          allowed_bots: 'claude[bot]'
+          claude_args: |
+            --allowedTools "WebFetch,WebSearch,Glob,Grep,Read,mcp__github_comment__create_comment,mcp__github_comment__update_claude_comment,mcp__github__get_issue_comments"
+          prompt: |
+            You are creating technical implementation plans following the GitHub spec-kit methodology.
+
+            <context>
+              <issue_details>${{ steps.setup.outputs.issue_details }}</issue_details>
+              <issue_description>${{ steps.setup.outputs.issue_description }}</issue_description>
+              <recent_comments>${{ steps.setup.outputs.recent_comments }}</recent_comments>
+              <is_revision>${{ steps.setup.outputs.is_revision }}</is_revision>
+              <last_human_user>${{ steps.setup.outputs.last_human_user }}</last_human_user>
+            </context>
+
+            ## Your Task
+            ${{ steps.setup.outputs.is_revision == 'true' && '
+            This is a REVISION based on previous feedback. Review the recent comments to understand what changes were requested and address them in your updated technical plan.
+            ' || '
+            This is INITIAL TECHNICAL PLANNING. Create a comprehensive technical implementation plan based on the specifications provided.
+            ' }}
+
+            ## CRITICAL: Always Post Comment
+            You MUST post a comment with your technical plan. This is not optional - every workflow run must produce a visible comment for the user to review. Your plan will automatically be posted as a comment to the issue.
+
+            ## Planning Process
+            1. Use `mcp__github__get_issue_comments` to review all previous comments, especially the approved specifications
+            2. Analyze the existing codebase architecture and patterns
+            3. Research relevant technologies, frameworks, and libraries if needed
+            4. Define the technical approach and implementation strategy
+            5. Consider integration points, dependencies, and potential challenges
+            6. Create a detailed technology stack and architecture plan
+
+            ## Output Format
+            Present your technical plan as a structured document:
+
+            ```
+            # Technical Implementation Plan
+
+            **Feature:** [Feature Name]
+            **Issue:** #${{ github.event.issue.number }}
+            **Date:** [Current Date]
+            **Specification:** Link to approved specification in previous comments
+            **Status:** Ready for Review
+
+            ## What I'm Doing
+            I've created a detailed technical implementation plan based on the approved specifications. This plan defines the HOW - including technology choices, architecture decisions, integration points, and technical approach - while building on the WHAT and WHY established in the specification phase.
+
+            ## Technical Context
+
+            ### Current Technology Stack
+            - **Language & Version:** [Programming language and version used in project]
+            - **Framework:** [Current framework/platform]
+            - **Dependencies:** [Key existing dependencies and versions]
+            - **Database:** [Database technology if applicable]
+            - **Testing Framework:** [Current testing tools and frameworks]
+            - **Target Platform:** [Deployment platform/environment]
+
+            ### Performance Goals
+            - **Response Time:** [Expected performance metrics]
+            - **Throughput:** [Capacity requirements]
+            - **Resource Usage:** [Memory, CPU, storage constraints]
+
+            ### Technical Constraints
+            - **Compatibility:** [Version compatibility requirements]
+            - **Security:** [Security compliance requirements]
+            - **Integration:** [External system dependencies]
+
+            ## Constitution Check
+
+            ### Project Principles Alignment
+            - [ ] **Simplicity:** Solution follows KISS principle and avoids over-engineering
+            - [ ] **Architecture:** Maintains existing architectural patterns and consistency
+            - [ ] **Testing:** Plan includes comprehensive testing strategy
+            - [ ] **Observability:** Includes logging, monitoring, and debugging capabilities
+            - [ ] **Documentation:** Technical decisions are well-documented
+
+            ## Architecture Overview
+            [High-level description of the technical approach and system architecture]
+
+            ## Implementation Strategy
+
+            ### Development Approach
+            - **Pattern:** [Design patterns to be used]
+            - **Structure:** [How code will be organized]
+            - **Integration:** [How new code integrates with existing codebase]
+
+            ### Key Components
+            - **Component 1:** [Purpose, responsibilities, and interfaces]
+            - **Component 2:** [Purpose, responsibilities, and interfaces]
+            - **Component 3:** [Purpose, responsibilities, and interfaces]
+
+            ### Data Flow & Storage
+            - **Data Models:** [Key data structures and relationships]
+            - **Storage Strategy:** [How data will be stored and accessed]
+            - **Data Flow:** [How data moves through the system]
+
+            ## Phase Planning
+
+            ### Phase 0: Research & Setup
+            - [ ] Analyze existing codebase patterns
+            - [ ] Identify reusable components
+            - [ ] Set up development environment
+            - [ ] Create feature branch structure
+
+            ### Phase 1: Design & Contracts
+            - [ ] Define component interfaces
+            - [ ] Create data models and schemas
+            - [ ] Design API contracts (if applicable)
+            - [ ] Establish testing contracts
+
+            ### Phase 2: Implementation Planning
+            - [ ] Break down into specific tasks
+            - [ ] Identify dependencies and blockers
+            - [ ] Plan integration points
+            - [ ] Define success criteria
+
+            ## Testing Strategy
+            - **Unit Testing:** [Approach for testing individual components]
+            - **Integration Testing:** [Strategy for testing component interactions]
+            - **End-to-End Testing:** [User workflow testing approach]
+            - **Performance Testing:** [Load and performance validation]
+
+            ## Risk Assessment & Mitigation
+            - **Technical Risk 1:** [Description] → **Mitigation:** [Strategy]
+            - **Technical Risk 2:** [Description] → **Mitigation:** [Strategy]
+            - **Integration Risk:** [Description] → **Mitigation:** [Strategy]
+
+            ## Dependencies & Prerequisites
+            - [ ] **External Dependencies:** [Third-party services or APIs needed]
+            - [ ] **Internal Dependencies:** [Other components or features required]
+            - [ ] **Infrastructure:** [Server, database, or deployment requirements]
+            - [ ] **Team Dependencies:** [Skills or resources needed]
+
+            ## Complexity Tracking
+            - **Overall Complexity:** [Low/Medium/High]
+            - **Technical Debt Impact:** [Assessment of technical debt introduced]
+            - **Maintenance Overhead:** [Long-term maintenance considerations]
+
+            ## Review & Acceptance Checklist
+            - [ ] Technical approach is sound and follows project patterns
+            - [ ] All requirements from specification are addressed
+            - [ ] Testing strategy is comprehensive
+            - [ ] Security considerations are adequate
+            - [ ] Performance requirements can be met
+            - [ ] Dependencies are identified and manageable
+
+            **Next Steps:** Review this technical plan and check the items you approve. Identify any concerns or needed adjustments. Then mention @claude-dev-truefrontier to proceed to task breakdown.
+            ```
+
+            ## Required Actions (Execute in Order)
+
+            **1. FIRST: Always Post Your Technical Plan Comment Above**
+            - You MUST explicitly call `mcp__github_comment__create_comment` or `mcp__github_comment__update_claude_comment` to post the complete technical plan with checkboxes as a comment
+            - Include the formatted technical plan document in the comment body
+            - Do not proceed to step 2 until you have successfully posted the comment using the MCP tool
+
+            **2. THEN: Update Workflow State**
+            Only after successfully posting your technical plan comment, execute these commands:
+
+            ```bash
+            # Remove the current stage label
+            gh issue edit ${{ github.event.issue.number }} \
+              --remove-label "needs:plan" \
+              --remove-label "needs:plan-revision"
+
+            # Set to review state and assign to human
+            gh issue edit ${{ github.event.issue.number }} \
+              --add-label "review:plan" \
+              --add-assignee "${{ steps.setup.outputs.last_human_user }}"
+            ```
+
+            Focus on practical, implementable technical solutions that align with the project's existing architecture and constraints. Use web research to validate technology choices and discover best practices.

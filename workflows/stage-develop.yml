@@ -82,9 +82,9 @@ jobs:
           use_sticky_comment: true
           allowed_bots: 'claude[bot]'
           claude_args: |
-            --allowedTools "Bash(gh:*),Bash(git:*),Bash(composer:*),Bash(php:*),Bash(npm:*),Read,Glob,Grep,Edit,Write,MultiEdit,Task,mcp__github_comment__create_comment,mcp__github_comment__update_claude_comment"
+            --allowedTools "Bash,Edit,MultiEdit,NotebookEdit,WebFetch,WebSearch,Write,mcp__github_comment__create_comment,mcp__github_comment__update_claude_comment,mcp__github__get_issue_comments"
           prompt: |
-            You are acting as a Senior Software Engineer implementing features based on BDD specification and architecture design.
+            You are acting as a Senior Software Engineer implementing features based on specifications, technical plan, and task breakdown.
 
             <context>
               <issue_details>${{ steps.setup.outputs.issue_details }}</issue_details>
@@ -98,7 +98,7 @@ jobs:
             ${{ steps.setup.outputs.is_revision == 'true' && '
             This is a REVISION based on previous feedback. Review the recent comments for bug reports, test failures, or requested changes and address them.
             ' || '
-            This is INITIAL DEVELOPMENT. Implement the complete feature based on approved BDD specification and architecture from previous comments.
+            This is INITIAL DEVELOPMENT. Implement the complete feature based on approved specifications, technical plan, and task breakdown from previous comments.
             ' }}
 
             ## CRITICAL: Always Post Comment
@@ -106,44 +106,56 @@ jobs:
 
             ## Implementation Process
 
-            ### 1. Review Specifications
-            - Analyze approved BDD specification from issue comments
-            - Review architecture design decisions  
-            - Understand all approved requirements from triage
+            ### 1. Review Previous Work (CRITICAL - Required Context)
+            - Use `mcp__github__get_issue_comments` to retrieve all issue comments and review the complete conversation history
+            - **MUST review the 3 required previous stage comments:**
+              1. **Specification Stage Comment** - What needs to be built and why (user stories, requirements, acceptance criteria)
+              2. **Technical Plan Stage Comment** - How it will be built (architecture, technology choices, implementation strategy)
+              3. **Task Breakdown Stage Comment** - Step-by-step implementation tasks (T001, T002, etc. with dependencies)
+            - **EQUALLY IMPORTANT: Review all human feedback comments** - Human responses to each stage are critical for understanding:
+              - What was approved/rejected in specifications
+              - Technical plan modifications or concerns raised
+              - Task breakdown adjustments or prioritization changes
+              - Any additional requirements or constraints added by humans
+            - **Integration Analysis:** Understand how human feedback shaped each stage's evolution
 
-            ### 2. Create Feature File
-            - Copy the approved Gherkin specification verbatim into a feature file
-            - Place in appropriate testing directory (tests/Feature/ or similar)
-            - Ensure .feature file matches the BDD spec exactly
+            ### 2. Execute Task Breakdown (Follow Approved Plan)
+            - **Follow the exact task sequence** from the approved task breakdown comment (T001 → T002 → T003...)
+            - **Respect human modifications** - If humans requested changes to the task order or priorities, follow their guidance
+            - **Implement systematically:** Setup → Tests → Implementation → Integration → Validation
+            - **Check dependencies:** Ensure prerequisite tasks are complete before starting dependent tasks
+            - **Reference specific files and components** identified in the task breakdown
+            - **Follow parallel task guidance** - Work on [P] marked tasks simultaneously when possible
 
-            ### 3. Test-Driven Development Cycle
-            1. **Write Tests First**: Create tests based on BDD scenarios
-            2. **Run Tests**: Execute `vendor/bin/phpunit` to see failures
-            3. **Implement Code**: Write minimal code to make tests pass
-            4. **Run Tests Again**: Verify tests pass
+            ### 3. Development Cycle
+            1. **Implement Tasks**: Follow the prioritized task list step-by-step
+            2. **Test as You Go**: Run tests after each significant change
+            3. **Verify Integration**: Ensure changes work with existing code
+            4. **Run Full Test Suite**: Execute all tests to verify nothing is broken
             5. **Refactor**: Improve code quality while keeping tests passing
-            6. **Repeat**: Continue until all scenarios are implemented
+            6. **Document**: Update documentation as needed
 
             ### 4. Integration and Final Testing
-            - Run complete test suite: `vendor/bin/phpunit`
-            - Fix any integration issues
-            - Ensure no existing tests are broken
+            - Run complete test suite using the project's test commands
+            - Fix any integration issues that arise
+            - Ensure no existing functionality is broken
             - Verify all new functionality works end-to-end
+            - Test edge cases and error conditions
 
             ## Testing Requirements (Critical)
             - **ALL tests must pass** before considering implementation complete
-            - If BDD .feature files exist, run Behat tests if available  
-            - Create comprehensive PHPUnit tests covering:
+            - Run the project's existing test suite to ensure compatibility
+            - Create appropriate tests based on the project's testing framework:
               - Unit tests for business logic
-              - Feature tests for user workflows
               - Integration tests for external dependencies
+              - End-to-end tests for user workflows
             - **Iterate until 100% of tests pass** - do not accept failing tests
 
             ## Code Quality Standards
-            - Follow PSR-12 coding standards
-            - Use Laravel conventions and patterns
-            - Implement proper error handling
-            - Add appropriate documentation
+            - Follow the project's existing coding standards and conventions
+            - Maintain consistency with existing codebase patterns
+            - Implement proper error handling and validation
+            - Add appropriate comments and documentation
             - No placeholder code or TODOs in final implementation
 
             ## Git Workflow
@@ -154,6 +166,10 @@ jobs:
             ## Required Actions (Execute in Order)
             
             **1. FIRST: Always Post Your Development Summary Comment Above**
+            - You MUST explicitly call `mcp__github_comment__create_comment` or `mcp__github_comment__update_claude_comment` to post a comprehensive development summary
+            - **Include Context Summary** - Briefly reference which specifications, technical plan elements, and task breakdown items you implemented
+            - **Include Human Feedback Integration** - Note how you incorporated human feedback from previous stage reviews
+            - Include a "What I'm Doing" section that explains your implementation approach
             - Post a comprehensive development summary including:
               - What was implemented (features, files changed, tests created)
               - All test results (must show 100% passing tests)
@@ -180,11 +196,12 @@ jobs:
             ```
 
             ## Success Criteria
-            - All BDD scenarios are implemented and passing
-            - All PHPUnit tests pass (run `vendor/bin/phpunit`)
-            - Code follows Laravel best practices
+            - All specified requirements are implemented and working
+            - All project tests pass using the project's test suite
+            - Code follows the project's best practices and conventions
             - No breaking changes to existing functionality
             - Feature branch is ready for PR creation
             - Implementation is complete with no placeholder code
+            - All tasks from the task breakdown are completed
 
             **Remember: This is the final implementation stage. Everything must be production-ready and fully tested before completion.**

@@ -1,0 +1,209 @@
+name: Stage - Specify
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  specify:
+    if: >
+      github.event.issue.state == 'open' &&
+      (contains(github.event.issue.labels.*.name, 'needs:specify') ||
+       contains(github.event.issue.labels.*.name, 'needs:specify-revision'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      actions: read
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup stage context
+        id: setup
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: issue } = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number
+            });
+
+            // Get recent comments for context
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              per_page: 15
+            });
+
+            // Filter out deleted/empty comments and get non-bot comments
+            const validComments = comments.data.filter(comment =>
+              comment.body &&
+              comment.body.trim() !== '' &&
+              !comment.body.includes('[DELETED]')
+            );
+
+            // Check if this is initial specify or revision
+            const labels = issue.labels.map(label => label.name);
+            const isRevision = labels.includes('needs:specify-revision');
+
+            // Find the last human who mentioned the bot (for assignment later)
+            const lastHumanComment = validComments
+              .reverse()
+              .find(comment =>
+                comment.user.type === 'User' &&
+                comment.body.includes('@claude-dev-truefrontier')
+              );
+
+            const lastHumanUser = lastHumanComment ? lastHumanComment.user.login : null;
+            core.setOutput('is_revision', isRevision.toString());
+            core.setOutput('issue_details', JSON.stringify({
+              ISSUE_NUMBER: context.issue.number,
+              ASSIGNEES: issue.assignees || [],
+              STATE: issue.state,
+              CREATED_AT: issue.created_at,
+              UPDATED_AT: issue.updated_at,
+            }));
+            core.setOutput('issue_description', issue.body || '');
+            core.setOutput('recent_comments', JSON.stringify(validComments));
+            core.setOutput('last_human_user', lastHumanUser);
+
+      - name: Run Specification Creation
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          use_sticky_comment: true
+          allowed_bots: 'claude[bot]'
+          claude_args: |
+            --allowedTools "WebFetch,WebSearch,Glob,Grep,Read,mcp__github_comment__create_comment,mcp__github_comment__update_claude_comment,mcp__github__get_issue_comments"
+          prompt: |
+            You are creating detailed software specifications following the GitHub spec-kit methodology.
+
+            <context>
+              <issue_details>${{ steps.setup.outputs.issue_details }}</issue_details>
+              <issue_description>${{ steps.setup.outputs.issue_description }}</issue_description>
+              <recent_comments>${{ steps.setup.outputs.recent_comments }}</recent_comments>
+              <is_revision>${{ steps.setup.outputs.is_revision }}</is_revision>
+              <last_human_user>${{ steps.setup.outputs.last_human_user }}</last_human_user>
+            </context>
+
+            ## Your Task
+            ${{ steps.setup.outputs.is_revision == 'true' && '
+            This is a REVISION based on previous feedback. Review the recent comments to understand what changes were requested and address them in your updated specification.
+            ' || '
+            This is INITIAL SPECIFICATION. Create a comprehensive specification following the GitHub spec-kit methodology.
+            ' }}
+
+            ## CRITICAL: Always Post Comment
+            You MUST post a comment with your specification. This is not optional - every workflow run must produce a visible comment for the user to review. Your specification will automatically be posted as a comment to the issue.
+
+            ## Specification Process
+            1. Use `mcp__github__get_issue_comments` to review all previous comments and understand context
+            2. Analyze the issue and explore the existing codebase thoroughly
+            3. Research relevant patterns, technologies, and best practices if needed
+            4. Create a detailed specification focused on WHAT and WHY, not HOW
+            5. Emphasize user needs and functional requirements
+            6. Define acceptance criteria and success metrics
+
+            ## Output Format
+            Present your specification as a structured document:
+
+            ```
+            # Feature Specification
+
+            **Feature:** [Feature Name]
+            **Issue:** #${{ github.event.issue.number }}
+            **Date:** [Current Date]
+            **Status:** Ready for Review
+
+            ## What I'm Doing
+            I've analyzed your issue and created a comprehensive software specification following the GitHub spec-kit methodology. This specification focuses on WHAT needs to be built and WHY, defining user scenarios, requirements, and acceptance criteria before we move to technical planning.
+
+            ## User Description
+            [Clear summary of the feature request from the user's perspective]
+
+            ## Primary User Story
+            As a [user type], I want [goal] so that [benefit].
+
+            ## User Scenarios & Testing
+
+            ### Acceptance Scenarios
+            **Given** [initial context]
+            **When** [action is performed]
+            **Then** [expected outcome]
+
+            **Given** [different context]
+            **When** [different action]
+            **Then** [different expected outcome]
+
+            ### Edge Cases
+            - **Scenario 1:** [Description of edge case and expected behavior]
+            - **Scenario 2:** [Description of edge case and expected behavior]
+
+            ## Requirements
+
+            ### Functional Requirements
+            1. [Specific, testable requirement]
+            2. [Specific, testable requirement]
+            3. [Specific, testable requirement]
+
+            ### Key Entities (if applicable)
+            - **Entity 1:** [Description and key attributes]
+            - **Entity 2:** [Description and key attributes]
+
+            ### Non-Functional Requirements
+            - **Performance:** [Performance expectations]
+            - **Security:** [Security considerations]
+            - **Usability:** [User experience requirements]
+            - **Compatibility:** [Platform/system compatibility needs]
+
+            ## Review & Acceptance Checklist
+
+            ### Content Quality
+            - [ ] Requirements are clear and unambiguous
+            - [ ] User scenarios are comprehensive
+            - [ ] Success criteria are measurable
+            - [ ] Edge cases are identified
+
+            ### Completeness
+            - [ ] All user needs are addressed
+            - [ ] Requirements are prioritized
+            - [ ] Dependencies are identified
+            - [ ] Constraints are documented
+
+            ## Execution Status
+            - [ ] Specification created
+            - [ ] Ready for stakeholder review
+            - [ ] Approved for technical planning
+
+            **Next Steps:** Review this specification and check the items you approve. Mark any ambiguities or missing requirements. Then mention @claude-dev-truefrontier to proceed to technical planning.
+            ```
+
+            ## Required Actions (Execute in Order)
+
+            **1. FIRST: Always Post Your Specification Comment Above**
+            - You MUST explicitly call `mcp__github_comment__create_comment` or `mcp__github_comment__update_claude_comment` to post the complete specification with checkboxes as a comment
+            - Include the formatted specification document in the comment body
+            - Do not proceed to step 2 until you have successfully posted the comment using the MCP tool
+
+            **2. THEN: Update Workflow State**
+            Only after successfully posting your specification comment, execute these commands:
+
+            ```bash
+            # Remove the current stage label
+            gh issue edit ${{ github.event.issue.number }} \
+              --remove-label "needs:specify" \
+              --remove-label "needs:specify-revision"
+
+            # Set to review state and assign to human
+            gh issue edit ${{ github.event.issue.number }} \
+              --add-label "review:specify" \
+              --add-assignee "${{ steps.setup.outputs.last_human_user }}"
+            ```
+
+            Focus on intent-driven requirements that clearly articulate user needs and business value. Use web research as needed to understand best practices and gather requirements insights.

@@ -63,6 +63,7 @@ jobs:
             core.setOutput('workflow_labels', JSON.stringify(workflowLabels));
             core.setOutput('comment_body', commentBody);
             core.setOutput('comment_user', comment.user.login);
+            core.setOutput('current_assignees', JSON.stringify(issue.assignees || []));
             core.setOutput('should_skip', 'false');
 
       - name: Run Orchestrator Logic
@@ -74,7 +75,7 @@ jobs:
           use_sticky_comment: true
           allowed_bots: 'claude[bot]'
           claude_args: |
-            --allowedTools "Bash(gh:*),Read,mcp__github_comment__create_comment,mcp__github_comment__update_claude_comment"
+            --allowedTools "Read,mcp__github_comment__create_comment,mcp__github_comment__update_claude_comment,mcp__github__*"
           prompt: |
             You are the Orchestrator for a GitHub AI workflow system. Your job is to interpret human feedback and manage workflow state transitions.
 
@@ -82,6 +83,7 @@ jobs:
               <issue_number>${{ github.event.issue.number }}</issue_number>
               <current_labels>${{ steps.check-state.outputs.current_labels }}</current_labels>
               <workflow_labels>${{ steps.check-state.outputs.workflow_labels }}</workflow_labels>
+              <current_assignees>${{ steps.check-state.outputs.current_assignees }}</current_assignees>
               <human_comment>${{ steps.check-state.outputs.comment_body }}</human_comment>
               <human_user>${{ steps.check-state.outputs.comment_user }}</human_user>
             </context>
@@ -95,7 +97,7 @@ jobs:
             ## State Transitions You Manage
 
             ### From No Labels (Fresh Issue)
-            - Human mentions @claude-dev-truefrontier → Add `needs:triage`, assign @claude-dev-truefrontier if user exists
+            - Human mentions @claude-dev-truefrontier → Add `needs:specify`, assign @claude-dev-truefrontier if user exists
 
             ### From review:* states
             - Human approves → Remove `review:X`, add next `needs:Y`, assign @claude-dev-truefrontier if user exists
@@ -103,16 +105,16 @@ jobs:
             - Human wants to skip stages → Remove `review:X`, add appropriate `needs:Y`, assign @claude-dev-truefrontier if user exists
 
             ### From error:* states  
-            - Human says retry → Remove `error:X`, add `needs:X-revision`, assign @claude-dev-truefrontier if user exists
-            - Human says skip → Remove `error:X`, add next `needs:Y`, assign @claude-dev-truefrontier if user exists
+            - Human requests changes/revision/retry → Remove `error:X`, add `needs:X-revision`, assign @claude-dev-truefrontier if user exists
+            - Human requests skip/continue → Remove `error:X`, add next `needs:Y`, assign @claude-dev-truefrontier if user exists
 
             ### Stop Commands
             - Human says stop/unassign → Remove ALL workflow labels, unassign @claude-dev-truefrontier if assigned
 
             ## Stage Flow Order
-            1. `triage` → `spec` → `architect` → `develop` (full flow)
-            2. Stages can be skipped: triage → develop (simple issues)
-            3. Spec and architect are optional, develop is required
+            1. `specify` → `plan` → `tasks` → `develop` (required full flow)
+            2. All stages are required and must be completed in sequence
+            3. Each stage must be reviewed and approved by a human before proceeding to the next stage
 
             ## Rules
             1. ONLY ONE workflow label at a time per issue
@@ -122,34 +124,31 @@ jobs:
             5. If unclear, ask for clarification and don't change labels
 
             ## Actions You Can Take
-            Use `gh issue edit` commands to:
-            - Add/remove labels: `--add-label "needs:triage"` or `--remove-label "review:triage"`
-            - Assign/unassign: `--add-assignee "claude-dev-truefrontier"` or `--remove-assignee "claude-dev-truefrontier"`
+            Use GitHub MCP tools to manage issues and gather information:
+            - Use `mcp__github__update_issue` to add/remove labels and assignees
+            - Use `mcp__github__get_issue_comments` to retrieve recent comments for additional context
+            - For user verification: Use available GitHub MCP user tools as needed
+            - The update_issue tool accepts: assignees (string[]), labels (string[]), and other issue properties
+            - The get_issue_comments tool accepts: issue_number, owner, repo, page, perPage (1-100)
             
             ## CRITICAL: User Assignment Check
             BEFORE attempting to assign @claude-dev-truefrontier, you MUST check if this user can be assigned:
-            1. First try: `gh api repos/${{ github.repository }}/assignees/claude-dev-truefrontier 2>/dev/null`
-            2. If the command returns successfully (exit code 0), the user exists and can be assigned
-            3. If it fails (exit code non-zero), skip the assignment step
+            1. Use GitHub MCP tools to verify if the user exists and can be assigned to issues
+            2. If the user check succeeds, proceed with assignment
+            3. If the user doesn't exist or can't be assigned, skip the assignment step
             
             ## ORDER: When transitioning to needs:* states
-            1. Check if claude-dev-truefrontier user can be assigned (see above)
-            2. If user exists: assign @claude-dev-truefrontier FIRST
-            3. THEN add the needs:* label (this triggers the stage workflow)
-            
-            Example with user check:
-            ```bash
-            # Step 1: Check if user can be assigned
-            if gh api repos/${{ github.repository }}/assignees/claude-dev-truefrontier 2>/dev/null; then
-              echo "User exists, will assign"
-              # Step 2: Assign first (only if user exists)
-              gh issue edit 123 --add-assignee "claude-dev-truefrontier"
-            else
-              echo "User claude-dev-truefrontier not found or cannot be assigned, skipping assignment"
-            fi
-            # Step 3: Add label (always do this, regardless of assignment)
-            gh issue edit 123 --add-label "needs:triage"
-            ```
+            1. Check if claude-dev-truefrontier user can be assigned using GitHub MCP tools
+            2. If user exists: Use `mcp__github__update_issue` to assign @claude-dev-truefrontier FIRST
+            3. THEN use `mcp__github__update_issue` to add the needs:* label (this triggers the stage workflow)
+
+            Example workflow using mcp__github__update_issue:
+            1. Verify user existence if needed using GitHub MCP tools
+            2. If user can be assigned: Call `mcp__github__update_issue` with assignees: ["claude-dev-truefrontier"]
+            3. Call `mcp__github__update_issue` with labels including the appropriate `needs:*` label
+            4. Always explain what actions you're taking and why
 
             ## Your Task
             Based on the human comment and current state, determine the appropriate action and execute it. Always explain your reasoning and what transition you're making. When assigning users, always check if they can be assigned first.
+
+            You can use `mcp__github__get_issue_comments` to retrieve recent issue comments if you need additional context beyond what's provided to better understand the conversation flow and make informed decisions.
