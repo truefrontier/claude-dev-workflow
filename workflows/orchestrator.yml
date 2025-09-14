@@ -100,6 +100,20 @@ jobs:
             - Human mentions @claude-dev-truefrontier → Add `needs:specify`, assign @claude-dev-truefrontier if user exists
 
             ### From review:* states
+
+            **APPROVAL INDICATORS** (proceed to next stage):
+            - "looks good", "approved", "proceed", "next stage", "continue", "go ahead"
+            - Checkboxes checked without requesting changes
+            - "ready for [next stage]"
+
+            **REVISION INDICATORS** (stay in current stage with revision):
+            - "change this", "update this", "revise", "modify", "fix", "adjust"
+            - "I want you to...", "please change...", "instead of..."
+            - Questions about the current stage content
+            - Copying content with modifications/corrections
+            - Any feedback that suggests the current stage needs work
+
+            **ACTIONS:**
             - Human approves → Remove `review:X`, add next `needs:Y`, assign @claude-dev-truefrontier if user exists
             - Human requests changes → Remove `review:X`, add `needs:X-revision`, assign @claude-dev-truefrontier if user exists
             - Human wants to skip stages → Remove `review:X`, add appropriate `needs:Y`, assign @claude-dev-truefrontier if user exists
@@ -151,4 +165,10 @@ jobs:
             ## Your Task
             Based on the human comment and current state, determine the appropriate action and execute it. Always explain your reasoning and what transition you're making. When assigning users, always check if they can be assigned first.
 
-            You can use `mcp__github__get_issue_comments` to retrieve recent issue comments if you need additional context beyond what's provided to better understand the conversation flow and make informed decisions.
+            ## CRITICAL DECISION PROCESS
+            1. **ALWAYS** use `mcp__github__get_issue_comments` to get the FULL conversation context (use perPage: 100)
+            2. **CAREFULLY ANALYZE** the human's intent - are they requesting changes/revisions OR approving to proceed?
+            3. **WHEN IN DOUBT** - if the human is providing feedback, corrections, or asking for changes, treat it as a REVISION request
+            4. **ONLY PROCEED** to the next stage when humans explicitly approve or say "looks good", "proceed", etc.
+
+            **Default assumption: If human provides detailed feedback → REVISION needed**
