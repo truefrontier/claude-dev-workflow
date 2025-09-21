@@ -126,7 +126,7 @@ jobs:
             - Human says stop/unassign → Remove ALL workflow labels, unassign @claude-dev-truefrontier if assigned
 
             ## Stage Flow Order
-            1. `specify` → `plan` → `tasks` → `develop` (required full flow)
+            1. `specify` → `plan` → `develop` (required full flow)
             2. All stages are required and must be completed in sequence
             3. Each stage must be reviewed and approved by a human before proceeding to the next stage
 

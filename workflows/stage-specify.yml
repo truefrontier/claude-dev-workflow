@@ -104,11 +104,15 @@ jobs:
 
             ## Specification Process
             1. Use `mcp__github__get_issue_comments` to review all previous comments and understand context
-            2. Analyze the issue and explore the existing codebase thoroughly
-            3. Research relevant patterns, technologies, and best practices if needed
+            2. Use Task tool with specialized agents for comprehensive research:
+               - Use Task with subagent_type: 'web-search-researcher' to research best practices, standards, and modern approaches for the requested feature
+               - Use Task with subagent_type: 'codebase-locator' to understand the current system structure and find related existing features
+               - Use Task with subagent_type: 'thoughts-locator' (if applicable) to find any existing research or decisions related to this feature area
+               - Use Task with subagent_type: 'thoughts-analyzer' (if applicable) to extract insights from relevant historical context
+            3. Analyze domain requirements and user needs based on research findings
             4. Create a detailed specification focused on WHAT and WHY, not HOW
-            5. Emphasize user needs and functional requirements
-            6. Define acceptance criteria and success metrics
+            5. Emphasize user needs and functional requirements informed by best practices
+            6. Define acceptance criteria and success metrics based on industry standards and user scenarios
 
             ## Output Format
             Present your specification as a structured document:

@@ -35,7 +35,7 @@ console.log('5. Create your first issue and mention @claude-dev-truefrontier\n')
 console.log(c('bright', 'Quick Start:'));
 console.log('• Create an issue describing a feature or bug');
 console.log('• Comment: @claude-dev-truefrontier');
-console.log('• The AI will start with triage analysis');
+console.log('• The AI will start with specification creation');
 console.log('• Review and approve each stage as needed\n');
 
 console.log(c('bright', 'Available Commands:'));
@@ -44,10 +44,9 @@ console.log(c('green', 'npm run docs:labels') + '   - Show label documentation')
 console.log(c('green', 'npm run setup:help') + '    - Show this help\n');
 
 console.log(c('bright', 'Workflow Stages:'));
-console.log('🔍 ' + c('blue', 'Triage') + '    - Analyzes issue and creates task list');
-console.log('📝 ' + c('magenta', 'Spec') + '       - Creates BDD specification (optional)');
-console.log('🏗️ ' + c('yellow', 'Architect') + '  - Designs technical architecture (optional)');
-console.log('💻 ' + c('green', 'Develop') + '    - Implements code with full testing (required)\n');
+console.log('📝 ' + c('magenta', 'Specify') + '   - Creates detailed specification with user stories and requirements');
+console.log('🏗️ ' + c('yellow', 'Plan') + '      - Creates technical plan with architecture and task breakdown');
+console.log('💻 ' + c('green', 'Develop') + '    - Implements code with full testing and creates feature branch\n');
 
 console.log(c('bright', 'Human Control:'));
 console.log('• Approve: Check boxes and mention @claude-dev-truefrontier');

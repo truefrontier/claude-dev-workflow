@@ -23,7 +23,6 @@ const requiredWorkflows = [
   'orchestrator.yml',
   'stage-specify.yml',
   'stage-plan.yml',
-  'stage-tasks.yml',
   'stage-develop.yml'
 ];
 
@@ -79,7 +78,7 @@ requiredWorkflows.forEach(filename => {
     }
 
     // Check for GitHub MCP tool usage in non-develop stages
-    if (['stage-specify.yml', 'stage-plan.yml', 'stage-tasks.yml'].includes(filename)) {
+    if (['stage-specify.yml', 'stage-plan.yml'].includes(filename)) {
       if (!contentStr.includes('mcp__github__get_issue_comments')) {
         console.log(c('yellow', '  ⚠️  No GitHub MCP comment retrieval found'));
       }
@@ -115,14 +114,15 @@ if (!fs.existsSync(githubWorkflowsDir)) {
 
 if (allValid) {
   console.log(c('green', '\n🎉 All workflow files are valid!'));
-  console.log(c('blue', '\nGitHub Claude Workflow v2 - Spec-Kit Based System'));
-  console.log('✅ 4-stage workflow: specify → plan → tasks → develop');
+  console.log(c('blue', '\nGitHub Claude Workflow v3 - Agent-Enhanced System'));
+  console.log('✅ 3-stage workflow: specify → plan → develop');
   console.log('✅ GitHub MCP tool integration');
+  console.log('✅ Agent-enhanced planning with codebase analysis');
   console.log('✅ All stages required with human approval');
   console.log(c('blue', '\nNext steps:'));
   console.log('1. Copy workflows to .github/workflows/');
   console.log('2. Configure ANTHROPIC_API_KEY secret');
-  console.log('3. Run: npm run setup:labels (will create v2 labels)');
+  console.log('3. Run: npm run setup:labels (will create v3 labels)');
 } else {
   console.log(c('red', '\n❌ Some workflow files have issues. Please fix them before proceeding.'));
   process.exit(1);

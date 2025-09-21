@@ -108,24 +108,28 @@ jobs:
 
             ### 1. Review Previous Work (CRITICAL - Required Context)
             - Use `mcp__github__get_issue_comments` to retrieve all issue comments and review the complete conversation history
-            - **MUST review the 3 required previous stage comments:**
+            - **MUST review the 2 required previous stage comments:**
               1. **Specification Stage Comment** - What needs to be built and why (user stories, requirements, acceptance criteria)
-              2. **Technical Plan Stage Comment** - How it will be built (architecture, technology choices, implementation strategy)
-              3. **Task Breakdown Stage Comment** - Step-by-step implementation tasks (T001, T002, etc. with dependencies)
+              2. **Comprehensive Plan Stage Comment** - How it will be built (architecture, technology choices, implementation strategy) AND detailed task breakdown (T001, T002, etc. with dependencies)
             - **EQUALLY IMPORTANT: Review all human feedback comments** - Human responses to each stage are critical for understanding:
               - What was approved/rejected in specifications
-              - Technical plan modifications or concerns raised
-              - Task breakdown adjustments or prioritization changes
+              - Plan modifications or concerns raised
+              - Task adjustments or prioritization changes
               - Any additional requirements or constraints added by humans
             - **Integration Analysis:** Understand how human feedback shaped each stage's evolution
+            - **READ THE PLAN COMPLETELY:** Before starting implementation, read the entire plan comment to understand the full context and approach
 
             ### 2. Execute Task Breakdown (Follow Approved Plan)
-            - **Follow the exact task sequence** from the approved task breakdown comment (T001 → T002 → T003...)
+            - **Follow the exact task sequence** from the approved comprehensive plan comment (T001 → T002 → T003...)
             - **Respect human modifications** - If humans requested changes to the task order or priorities, follow their guidance
             - **Implement systematically:** Setup → Tests → Implementation → Integration → Validation
             - **Check dependencies:** Ensure prerequisite tasks are complete before starting dependent tasks
             - **Reference specific files and components** identified in the task breakdown
             - **Follow parallel task guidance** - Work on [P] marked tasks simultaneously when possible
+            - **Reality Check:** If you encounter mismatches between the plan and actual codebase, STOP and think deeply about why:
+              - Present the issue clearly: "Expected: [what the plan says] Found: [actual situation] Why this matters: [explanation]"
+              - Adapt to what you find while following the plan's intent
+              - Communicate any significant deviations clearly in your progress updates
 
             ### 3. Development Cycle
             1. **Implement Tasks**: Follow the prioritized task list step-by-step
@@ -135,12 +139,15 @@ jobs:
             5. **Refactor**: Improve code quality while keeping tests passing
             6. **Document**: Update documentation as needed
 
-            ### 4. Integration and Final Testing
+            ### 4. Verification and Progress Tracking
+            - **Batch verification at natural stopping points** - Don't let verification interrupt your flow
             - Run complete test suite using the project's test commands
             - Fix any integration issues that arise
             - Ensure no existing functionality is broken
             - Verify all new functionality works end-to-end
             - Test edge cases and error conditions
+            - **Update plan progress:** Mark completed tasks in your progress comments (reference the plan's checkboxes)
+            - **Forward momentum:** Keep the end goal in mind and maintain progress toward the final deliverable
 
             ## Testing Requirements (Critical)
             - **ALL tests must pass** before considering implementation complete

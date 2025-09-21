@@ -73,7 +73,7 @@ jobs:
             core.setOutput('recent_comments', JSON.stringify(validComments));
             core.setOutput('last_human_user', lastHumanUser);
 
-      - name: Run Technical Planning
+      - name: Run Technical Planning and Task Breakdown
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -82,7 +82,7 @@ jobs:
           claude_args: |
             --allowedTools "WebFetch,WebSearch,Glob,Grep,Read,Task,TodoWrite,mcp__github__get_issue,mcp__github__get_issue_comments,mcp__github__add_issue_comment,mcp__github__update_issue"
           prompt: |
-            You are creating technical implementation plans following the GitHub spec-kit methodology.
+            You are creating comprehensive technical implementation plans with detailed task breakdowns following the GitHub spec-kit methodology.
 
             <context>
               <issue_details>${{ steps.setup.outputs.issue_details }}</issue_details>
@@ -94,27 +94,33 @@ jobs:
 
             ## Your Task
             ${{ steps.setup.outputs.is_revision == 'true' && '
-            This is a REVISION based on previous feedback. Review the recent comments to understand what changes were requested and address them in your updated technical plan.
+            This is a REVISION based on previous feedback. Review the recent comments to understand what changes were requested and address them in your updated comprehensive plan.
             ' || '
-            This is INITIAL TECHNICAL PLANNING. Create a comprehensive technical implementation plan based on the specifications provided.
+            This is INITIAL COMPREHENSIVE PLANNING. Create both technical implementation plan AND detailed task breakdown based on the approved specifications.
             ' }}
 
             ## CRITICAL: Always Post Comment
-            You MUST post a comment with your technical plan. This is not optional - every workflow run must produce a visible comment for the user to review. Your plan will automatically be posted as a comment to the issue.
+            You MUST post a comment with your comprehensive plan. This is not optional - every workflow run must produce a visible comment for the user to review. Your plan will automatically be posted as a comment to the issue.
 
             ## Planning Process
             1. Use `mcp__github__get_issue_comments` to review all previous comments, especially the approved specifications
-            2. Analyze the existing codebase architecture and patterns
-            3. Research relevant technologies, frameworks, and libraries if needed
-            4. Define the technical approach and implementation strategy
-            5. Consider integration points, dependencies, and potential challenges
-            6. Create a detailed technology stack and architecture plan
+            2. Use Task tool with specialized agents for comprehensive codebase analysis:
+               - Use Task with subagent_type: 'codebase-locator' to find relevant files and directories for the feature
+               - Use Task with subagent_type: 'codebase-analyzer' to understand current implementation patterns and architecture
+               - Use Task with subagent_type: 'codebase-pattern-finder' to find similar existing implementations to model after
+               - Use Task with subagent_type: 'thoughts-locator' (if applicable) to find any existing documentation or plans related to this feature
+               - Use Task with subagent_type: 'thoughts-analyzer' (if applicable) to extract insights from relevant historical decisions or research
+            3. Validate technology choices against existing codebase patterns and constraints
+            4. Define the technical approach and implementation strategy based on codebase analysis
+            5. Consider integration points, dependencies, and potential challenges specific to this codebase
+            6. Break down implementation into specific, actionable development tasks
+            7. Create detailed technology stack and architecture plan with task-level breakdown
 
             ## Output Format
-            Present your technical plan as a structured document:
+            Present your comprehensive plan as a structured document:
 
             ```
-            # Technical Implementation Plan
+            # Technical Implementation Plan & Task Breakdown
 
             **Feature:** [Feature Name]
             **Issue:** #${{ github.event.issue.number }}
@@ -123,9 +129,9 @@ jobs:
             **Status:** Ready for Review
 
             ## What I'm Doing
-            I've created a detailed technical implementation plan based on the approved specifications. This plan defines the HOW - including technology choices, architecture decisions, integration points, and technical approach - while building on the WHAT and WHY established in the specification phase.
+            I've created a comprehensive technical implementation plan that combines high-level architecture decisions with detailed task breakdown. This plan defines both the HOW (technical approach, architecture, integration points) and the specific step-by-step tasks needed for implementation, building on the approved specifications.
 
-            ## Technical Context
+            ## Technical Context & Research
 
             ### Current Technology Stack
             - **Language & Version:** [Programming language and version used in project]
@@ -134,6 +140,12 @@ jobs:
             - **Database:** [Database technology if applicable]
             - **Testing Framework:** [Current testing tools and frameworks]
             - **Target Platform:** [Deployment platform/environment]
+
+            ### Codebase Analysis
+            [Results from codebase-locator, codebase-analyzer, and codebase-pattern-finder agents]
+            - **Similar Patterns Found:** [Existing implementations to model after with file:line references]
+            - **Integration Points:** [How new feature connects to existing code]
+            - **Conventions to Follow:** [Project patterns and conventions discovered]
 
             ### Performance Goals
             - **Response Time:** [Expected performance metrics]
@@ -174,25 +186,89 @@ jobs:
             - **Storage Strategy:** [How data will be stored and accessed]
             - **Data Flow:** [How data moves through the system]
 
-            ## Phase Planning
+            ## Detailed Task Breakdown
 
-            ### Phase 0: Research & Setup
-            - [ ] Analyze existing codebase patterns
-            - [ ] Identify reusable components
-            - [ ] Set up development environment
-            - [ ] Create feature branch structure
+            ### Setup & Foundation Phase
+            **Sequential Tasks (must be completed in order):**
 
-            ### Phase 1: Design & Contracts
-            - [ ] Define component interfaces
-            - [ ] Create data models and schemas
-            - [ ] Design API contracts (if applicable)
-            - [ ] Establish testing contracts
+            - [ ] **T001**: [Specific setup task] - [File/component to create/modify]
+              - **Type:** Setup | **Estimated Time:** [X hours] | **Dependencies:** None
+              - **Acceptance:** [Specific measurable criteria]
 
-            ### Phase 2: Implementation Planning
-            - [ ] Break down into specific tasks
-            - [ ] Identify dependencies and blockers
-            - [ ] Plan integration points
-            - [ ] Define success criteria
+            - [ ] **T002**: [Environment/config task] - [Configuration files to modify]
+              - **Type:** Configuration | **Estimated Time:** [X hours] | **Dependencies:** T001
+              - **Acceptance:** [Specific measurable criteria]
+
+            ### Test-Driven Development Phase
+            **TDD Approach - Write Tests First:**
+
+            - [ ] **T003**: [Write unit tests for core component] - [Test files to create]
+              - **Type:** Testing | **Estimated Time:** [X hours] | **Dependencies:** T002
+              - **Acceptance:** [Test coverage and passing criteria]
+
+            - [ ] **T004**: [Write integration tests] - [Test files to create]
+              - **Type:** Testing | **Estimated Time:** [X hours] | **Dependencies:** T003
+              - **Acceptance:** [Integration test success criteria]
+
+            ### Core Implementation Phase
+            **Parallel Tasks [P] can be worked on simultaneously:**
+
+            - [ ] **T005** [P]: [Implement data model] - [Model files to create/modify]
+              - **Type:** Data Layer | **Estimated Time:** [X hours] | **Dependencies:** T004
+              - **Acceptance:** [Model validation and test passing criteria]
+
+            - [ ] **T006** [P]: [Implement service layer] - [Service files to create/modify]
+              - **Type:** Business Logic | **Estimated Time:** [X hours] | **Dependencies:** T004
+              - **Acceptance:** [Service functionality and test passing criteria]
+
+            - [ ] **T007**: [Implement API endpoints] - [Controller/route files to modify]
+              - **Type:** API Layer | **Estimated Time:** [X hours] | **Dependencies:** T005, T006
+              - **Acceptance:** [API response and functionality criteria]
+
+            ### Integration & Features Phase
+
+            - [ ] **T008**: [Integrate components] - [Integration files to modify]
+              - **Type:** Integration | **Estimated Time:** [X hours] | **Dependencies:** T007
+              - **Acceptance:** [End-to-end functionality criteria]
+
+            - [ ] **T009** [P]: [Implement UI components] - [UI files to create/modify]
+              - **Type:** Frontend | **Estimated Time:** [X hours] | **Dependencies:** T007
+              - **Acceptance:** [UI functionality and design criteria]
+
+            ### Validation & Polish Phase
+
+            - [ ] **T010**: [Performance optimization] - [Files to optimize]
+              - **Type:** Performance | **Estimated Time:** [X hours] | **Dependencies:** T008, T009
+              - **Acceptance:** [Performance benchmark criteria]
+
+            - [ ] **T011**: [Security validation] - [Security measures to implement]
+              - **Type:** Security | **Estimated Time:** [X hours] | **Dependencies:** T008
+              - **Acceptance:** [Security audit and test criteria]
+
+            ## Dependency Graph
+            ```
+            T001 → T002 → T003 → T004 → [T005, T006] → T007 → T008 → T010
+                                    ↓           ↓       ↓
+                                   T009 ----→ T011 → [Complete]
+            ```
+
+            ## Task Rules Applied
+            - ✅ **Modular**: Each task is independent and focused
+            - ✅ **Testable**: Every implementation task has corresponding tests
+            - ✅ **Sequential Logic**: Dependencies ensure proper build order
+            - ✅ **Parallel Opportunities**: [P] tasks can be worked simultaneously
+            - ✅ **Measurable**: Each task has specific acceptance criteria
+
+            ## Files & Components Analysis
+
+            ### New Files to Create:
+            - [ ] `[path/to/test-file.spec.js]` - [Purpose and test coverage]
+            - [ ] `[path/to/model-file.js]` - [Data model and validation]
+            - [ ] `[path/to/service-file.js]` - [Business logic implementation]
+
+            ### Existing Files to Modify:
+            - [ ] `[path/to/existing-file.js]` - [Specific changes needed]
+            - [ ] `[path/to/config-file.json]` - [Configuration updates]
 
             ## Testing Strategy
             - **Unit Testing:** [Approach for testing individual components]
@@ -223,19 +299,22 @@ jobs:
             - [ ] Security considerations are adequate
             - [ ] Performance requirements can be met
             - [ ] Dependencies are identified and manageable
+            - [ ] Task breakdown is detailed and actionable
+            - [ ] Each task has clear acceptance criteria
+            - [ ] Dependencies between tasks are properly mapped
 
-            **Next Steps:** Review this technical plan and check the items you approve. Identify any concerns or needed adjustments. Then mention @claude-dev-truefrontier to proceed to task breakdown.
+            **Next Steps:** Review this comprehensive plan and check the items you approve. Identify any concerns or needed adjustments. Then mention @claude-dev-truefrontier to proceed to development implementation.
             ```
 
             ## Required Actions (Execute in Order)
 
-            **1. FIRST: Always Post Your Technical Plan Comment Above**
-            - You MUST explicitly call `mcp__github_comment__create_comment` or `mcp__github_comment__update_claude_comment` to post the complete technical plan with checkboxes as a comment
-            - Include the formatted technical plan document in the comment body
+            **1. FIRST: Always Post Your Comprehensive Plan Comment Above**
+            - You MUST explicitly call `mcp__github_comment__create_comment` or `mcp__github_comment__update_claude_comment` to post the complete plan with checkboxes as a comment
+            - Include the formatted comprehensive plan document in the comment body
             - Do not proceed to step 2 until you have successfully posted the comment using the MCP tool
 
             **2. THEN: Update Workflow State**
-            Only after successfully posting your technical plan comment, execute these commands:
+            Only after successfully posting your comprehensive plan comment, execute these commands:
 
             Use `mcp__github__update_issue` with these parameters:
             - issue_number: ${{ github.event.issue.number }}
@@ -245,4 +324,4 @@ jobs:
 
             First get current issue state with `mcp__github__get_issue`, then call `mcp__github__update_issue` with the updated labels list (keeping all non-workflow labels and adding review:plan).
 
-            Focus on practical, implementable technical solutions that align with the project's existing architecture and constraints. Use web research to validate technology choices and discover best practices.
+            Focus on practical, implementable technical solutions that align with the project's existing architecture and constraints. Use codebase analysis agents to validate technology choices against existing patterns and discover similar implementations to model after. The specification stage will have already researched best practices and domain requirements - your job is to translate those into concrete technical implementation plans.
