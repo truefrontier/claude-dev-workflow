@@ -139,8 +139,13 @@ jobs:
             5. **Refactor**: Improve code quality while keeping tests passing
             6. **Document**: Update documentation as needed
 
-            ### 4. Verification and Progress Tracking
+            ### 4. Verification and Progress Tracking (MANDATORY VERIFICATION)
             - **Batch verification at natural stopping points** - Don't let verification interrupt your flow
+            - **MANDATORY: Verify all tool executions** - Never claim something was done without verification
+            - **CRITICAL: After creating branches** - Run `git branch` to confirm branch exists and is active
+            - **CRITICAL: After making commits** - Run `git log --oneline -5` to show recent commits actually exist
+            - **CRITICAL: After file changes** - Use Read tool to verify changes were actually written to files
+            - **CRITICAL: After running tests** - Show actual test output, never assume tests passed
             - Run complete test suite using the project's test commands
             - Fix any integration issues that arise
             - Ensure no existing functionality is broken
@@ -178,12 +183,14 @@ jobs:
             - **Include Human Feedback Integration** - Note how you incorporated human feedback from previous stage reviews
             - Include a "What I'm Doing" section that explains your implementation approach
             - Post a comprehensive development summary including:
+              - **MANDATORY PROOF SECTION:** Include verification commands and their outputs to prove work was actually completed
               - What was implemented (features, files changed, tests created)
               - All test results (must show 100% passing tests)
-              - Branch name and commit details
+              - Branch name and commit details WITH VERIFICATION (`git branch`, `git log`, actual git status)
               - Any issues encountered and how they were resolved
               - Final implementation status and readiness for PR
               - **MUST INCLUDE: "Create a PR" link** using the format: `[Create a PR](https://github.com/${{ github.repository }}/compare/main...BRANCH_NAME)`
+              - **NEVER claim branches/commits/changes exist without showing verification commands**
             - This happens automatically when you include the summary in your response
             - Do not proceed to step 2 until the comment is posted
             
@@ -198,13 +205,17 @@ jobs:
 
             First get current issue state with `mcp__github__get_issue`, then call `mcp__github__update_issue` with the updated labels list (keeping all non-workflow labels and adding review:develop).
 
-            ## Success Criteria
+            ## Success Criteria (WITH MANDATORY VERIFICATION)
             - All specified requirements are implemented and working
-            - All project tests pass using the project's test suite
+            - All project tests pass using the project's test suite (with verification output shown)
             - Code follows the project's best practices and conventions
             - No breaking changes to existing functionality
-            - Feature branch is ready for PR creation
+            - **Feature branch exists and is verified** (git branch output shown in comment)
+            - **Commits exist and are verified** (git log output shown in comment)
+            - **File changes are verified** (Read tool used to confirm changes written)
+            - **Test results are verified** (actual test output shown, not assumed)
             - Implementation is complete with no placeholder code
             - All tasks from the task breakdown are completed
+            - **Development summary includes proof commands demonstrating all work was actually completed**
 
             **Remember: This is the final implementation stage. Everything must be production-ready and fully tested before completion.**
