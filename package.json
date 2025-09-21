@@ -52,6 +52,7 @@
     "lib/",
     "templates/",
     "workflows/",
+    "agents/",
     "scripts/",
     "CLAUDE.md",
     "README.md",
