@@ -21,7 +21,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0  # Full history needed for branching
 
       - name: Setup stage context
         id: setup
@@ -74,15 +74,22 @@ jobs:
             core.setOutput('recent_comments', JSON.stringify(validComments));
             core.setOutput('last_human_user', lastHumanUser);
 
+      - name: Configure Git
+        run: |
+          git config --global user.name "claude[bot]"
+          git config --global user.email "claude-bot@anthropic.com"
+          git config --global init.defaultBranch main
+
       - name: Run Development Implementation
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           branch_prefix: "feature/issue-${{ github.event.issue.number }}-"
+          base_branch: "main"
           use_sticky_comment: true
           allowed_bots: 'claude[bot]'
           claude_args: |
-            --allowedTools "Bash,Edit,MultiEdit,Write,Glob,Grep,Read,Task,TodoWrite,WebFetch,WebSearch,mcp__github__get_issue,mcp__github__get_issue_comments,mcp__github__add_issue_comment,mcp__github__update_issue,mcp__github__create_branch,mcp__github__create_pull_request"
+            --allowedTools "Bash,Edit,MultiEdit,Write,Glob,Grep,Read,Task,TodoWrite,WebFetch,WebSearch,mcp__github__get_issue,mcp__github__get_issue_comments,mcp__github__add_issue_comment,mcp__github__update_issue,mcp__github__create_branch,mcp__github__create_pull_request,mcp__github__push_files,mcp__github__create_or_update_file"
           prompt: |
             You are acting as a Senior Software Engineer implementing features based on specifications, technical plan, and task breakdown.
 
@@ -170,9 +177,38 @@ jobs:
             - Add appropriate comments and documentation
             - No placeholder code or TODOs in final implementation
 
-            ## Git Workflow
-            - Create feature branch: `feature/issue-${{ github.event.issue.number }}-[description]`
-            - Make atomic commits with clear messages
+            ## Git Workflow (AUTOMATIC OPERATIONS REQUIRED)
+            **CRITICAL: You MUST perform these git operations automatically:**
+            1. **Create feature branch**: `feature/issue-${{ github.event.issue.number }}-[description]`
+            2. **Make atomic commits** with clear, descriptive messages
+            3. **Push branch to origin** - Branch will be automatically created on remote
+            4. **Verify all operations** - Show `git status`, `git log`, `git branch` outputs
+
+            **Git Options (Choose best approach for your task):**
+
+            **Option A - Bulk File Push (RECOMMENDED for multiple files):**
+            - Use `mcp__github__push_files` to push all changes in one operation:
+              - `branch`: `feature/issue-${{ github.event.issue.number }}-[description]`
+              - `files`: Array of file objects with `path` and `content`
+              - `message`: Descriptive commit message
+              - `owner`: Repository owner from context
+              - `repo`: Repository name from context
+
+            **Option B - Single File Updates (RECOMMENDED for individual files):**
+            - Use `mcp__github__create_or_update_file` for file-by-file commits:
+              - `branch`: `feature/issue-${{ github.event.issue.number }}-[description]`
+              - `path`: File path (e.g., "src/components/Component.vue")
+              - `content`: File content as string
+              - `message`: Commit message describing the change
+              - `owner`: Repository owner from context
+              - `repo`: Repository name from context
+              - `sha`: Required for updates (get from file info first)
+
+            **Option C - Manual Git Commands (fallback):**
+            - `git checkout -b feature/issue-${{ github.event.issue.number }}-[description]`
+            - `git add .` (or specific files)
+            - `git commit -m "descriptive commit message"`
+            - `git push origin feature/issue-${{ github.event.issue.number }}-[description]`
             - Follow conventional commit format when possible
 
             ## Required Actions (Execute in Order)
@@ -194,8 +230,16 @@ jobs:
             - This happens automatically when you include the summary in your response
             - Do not proceed to step 2 until the comment is posted
             
-            **2. THEN: Update Workflow State**
-            Only after successfully posting your development summary comment, execute these commands:
+            **2. THEN: Commit and Push Changes (MANDATORY)**
+            After posting your development summary comment, you MUST commit and push your changes:
+            - Create and checkout feature branch: `git checkout -b feature/issue-${{ github.event.issue.number }}-[description]`
+            - Stage all changes: `git add .`
+            - Commit with descriptive message: `git commit -m "implement [feature description]"`
+            - Push branch to remote: `git push origin feature/issue-${{ github.event.issue.number }}-[description]`
+            - Verify operations with: `git status`, `git log --oneline -3`, `git branch`
+
+            **3. FINALLY: Update Workflow State**
+            Only after successfully committing and pushing changes, execute these commands:
 
             Use `mcp__github__update_issue` with these parameters:
             - issue_number: ${{ github.event.issue.number }}
@@ -212,6 +256,7 @@ jobs:
             - No breaking changes to existing functionality
             - **Feature branch exists and is verified** (git branch output shown in comment)
             - **Commits exist and are verified** (git log output shown in comment)
+            - **Changes pushed to remote repository** (git push successful and verified)
             - **File changes are verified** (Read tool used to confirm changes written)
             - **Test results are verified** (actual test output shown, not assumed)
             - Implementation is complete with no placeholder code
