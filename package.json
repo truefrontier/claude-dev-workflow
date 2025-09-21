@@ -1,6 +1,6 @@
 {
   "name": "@truefrontier/claude-dev-workflow",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "An automated software development pipeline that uses Claude AI to guide issues through structured development stages with human oversight.",
   "keywords": [
     "github",
