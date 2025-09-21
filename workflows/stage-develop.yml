@@ -74,12 +74,6 @@ jobs:
             core.setOutput('recent_comments', JSON.stringify(validComments));
             core.setOutput('last_human_user', lastHumanUser);
 
-      - name: Configure Git
-        run: |
-          git config --global user.name "claude[bot]"
-          git config --global user.email "claude-bot@anthropic.com"
-          git config --global init.defaultBranch main
-
       - name: Run Development Implementation
         uses: anthropics/claude-code-action@v1
         with:
