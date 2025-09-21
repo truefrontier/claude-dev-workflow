@@ -4,27 +4,56 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## System Overview
 
-This repository contains a GitHub Actions workflow system that automates software development stages using Claude AI. The system implements a state machine pattern with human oversight at each stage.
+This repository provides an npm package that installs a GitHub Actions workflow system for automating software development using Claude AI. The system implements a state machine pattern with human oversight at each stage.
+
+## Development Commands
+
+```bash
+# Testing the CLI locally
+node bin/cli.js init --dry-run     # Test installation without making changes
+node bin/cli.js validate           # Validate workflow configurations
+node bin/cli.js help               # Show comprehensive help
+
+# Publishing updates
+npm version patch                  # Increment version
+npm publish                        # Publish to GitHub Packages
+
+# Testing workflows
+npm run validate:workflows         # Validate all workflow YAML files
+npm run setup:labels              # Create GitHub labels (cross-platform)
+```
+
+## Package Architecture
+
+### CLI System (`lib/commands/`)
+- `init.js` - Main installation wizard that detects project type, copies workflows/agents, sets up GitHub
+- `validate.js` - Validates workflow files and GitHub configuration
+- `labels.js` - Creates required GitHub labels for workflow state management
+- `help.js` - Comprehensive help system with project detection
+
+### Utilities (`lib/utils/`)
+- `project-detector.js` - Detects language/framework and generates appropriate commands
+- `files.js` - Handles copying workflows, agents, and scripts with branch detection
+- `validators.js` - Validates GitHub CLI, repository access, and permissions
+
+### Installed Components
+When users run `npx @truefrontier/claude-dev-workflow init`, the following are copied to their repository:
+- **Workflows** (`workflows/` → `.github/workflows/`) - GitHub Actions workflow files
+- **Agents** (`agents/` → `.claude/agents/`) - Claude Code agent configurations
+- **Scripts** (`scripts/` → `scripts/`) - Setup and validation utilities
 
 ## Workflow Architecture
 
-### State Machine Pattern
-The system operates as a finite state machine with these label-based states:
-- `needs:*` - Stage is actively being worked on by @claude-dev-truefrontier  
-- `review:*` - Stage complete, awaiting human review (human assigned)
-- `error:*` - Stage encountered error, needs human attention (human assigned)
-
-### Stage Flow
-1. **Triage** (`triage`) - Issue analysis and scope definition
-2. **Specification** (`spec`) - BDD/Gherkin feature specification creation  
-3. **Architecture** (`architect`) - Technical design and system architecture
-4. **Development** (`develop`) - Code implementation and testing
+### Current Stage Flow (v2)
+1. **Specify** (`stage-specify.yml`) - Creates comprehensive specifications using GitHub spec-kit methodology
+2. **Plan** (`stage-plan.yml`) - Develops technical implementation plans
+3. **Tasks** - Implicit stage within Plan that creates numbered task breakdowns
+4. **Develop** (`stage-develop.yml`) - Implements code following approved specifications
 
 ### Workflow Files
 - `orchestrator.yml` - Main workflow controller, interprets human commands and manages state transitions
-- `stage-triage.yml` - Analyzes issues and creates actionable task lists
-- `stage-spec.yml` - Creates BDD specifications using Gherkin format  
-- `stage-architect.yml` - Designs technical architecture for complex features
+- `stage-specify.yml` - Creates specifications with user stories and requirements
+- `stage-plan.yml` - Creates technical plans and task breakdowns (includes Tasks stage)
 - `stage-develop.yml` - Implements code with full testing and creates feature branches
 
 ## Key Behavioral Patterns
