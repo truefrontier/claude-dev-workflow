@@ -83,7 +83,7 @@ jobs:
           use_sticky_comment: true
           allowed_bots: 'claude[bot]'
           claude_args: |
-            --allowedTools "Bash,Edit,MultiEdit,Write,Glob,Grep,Read,Task,TodoWrite,WebFetch,WebSearch,mcp__github__get_issue,mcp__github__get_issue_comments,mcp__github__add_issue_comment,mcp__github__update_issue,mcp__github__create_branch,mcp__github__create_pull_request,mcp__github__push_files,mcp__github__create_or_update_file"
+            --allowedTools "Bash,Edit,MultiEdit,Write,Glob,Grep,Read,Task,TodoWrite,WebFetch,WebSearch,mcp__github__get_issue,mcp__github__get_issue_comments,mcp__github__add_issue_comment,mcp__github__update_issue,mcp__github__create_branch,mcp__github__create_pull_request,mcp__github__push_files,mcp__github__create_or_update_file,Bash(git:*)"
           prompt: |
             You are acting as a Senior Software Engineer implementing features based on specifications, technical plan, and task breakdown.
 
@@ -171,39 +171,27 @@ jobs:
             - Add appropriate comments and documentation
             - No placeholder code or TODOs in final implementation
 
-            ## Git Workflow (AUTOMATIC OPERATIONS REQUIRED)
-            **CRITICAL: You MUST perform these git operations automatically:**
-            1. **Create feature branch**: `feature/issue-${{ github.event.issue.number }}-[description]`
-            2. **Make atomic commits** with clear, descriptive messages
-            3. **Push branch to origin** - Branch will be automatically created on remote
-            4. **Verify all operations** - Show `git status`, `git log`, `git branch` outputs
+            ## Git Workflow (MANDATORY - USE GITHUB OPERATIONS AGENT)
+            **CRITICAL: Development is INCOMPLETE without pushing to remote origin!**
 
-            **Git Options (Choose best approach for your task):**
+            **You MUST use the Task tool to launch the github-operations agent for ALL git operations.**
+            This specialized agent will handle:
+            - Creating and verifying feature branches
+            - Making atomic commits with proper messages
+            - **PUSHING ALL CHANGES TO REMOTE ORIGIN (MANDATORY)**
+            - Verifying all operations with actual command outputs
 
-            **Option A - Bulk File Push (RECOMMENDED for multiple files):**
-            - Use `mcp__github__push_files` to push all changes in one operation:
-              - `branch`: `feature/issue-${{ github.event.issue.number }}-[description]`
-              - `files`: Array of file objects with `path` and `content`
-              - `message`: Descriptive commit message
-              - `owner`: Repository owner from context
-              - `repo`: Repository name from context
+            Launch the agent with:
+            ```
+            Task(
+              subagent_type="github-operations",
+              description="Handle all git operations",
+              prompt="Create feature branch 'feature/issue-${{ github.event.issue.number }}-[description]', commit all changes with descriptive messages, and PUSH TO REMOTE ORIGIN. Show all verification commands and outputs."
+            )
+            ```
 
-            **Option B - Single File Updates (RECOMMENDED for individual files):**
-            - Use `mcp__github__create_or_update_file` for file-by-file commits:
-              - `branch`: `feature/issue-${{ github.event.issue.number }}-[description]`
-              - `path`: File path (e.g., "src/components/Component.vue")
-              - `content`: File content as string
-              - `message`: Commit message describing the change
-              - `owner`: Repository owner from context
-              - `repo`: Repository name from context
-              - `sha`: Required for updates (get from file info first)
-
-            **Option C - Manual Git Commands (fallback):**
-            - `git checkout -b feature/issue-${{ github.event.issue.number }}-[description]`
-            - `git add .` (or specific files)
-            - `git commit -m "descriptive commit message"`
-            - `git push origin feature/issue-${{ github.event.issue.number }}-[description]`
-            - Follow conventional commit format when possible
+            **REMEMBER: Local commits without remote push = FAILED DEVELOPMENT STAGE**
+            The github-operations agent will ensure all changes reach the remote repository.
 
             ## Required Actions (Execute in Order)
             
@@ -224,13 +212,14 @@ jobs:
             - This happens automatically when you include the summary in your response
             - Do not proceed to step 2 until the comment is posted
             
-            **2. THEN: Commit and Push Changes (MANDATORY)**
-            After posting your development summary comment, you MUST commit and push your changes:
-            - Create and checkout feature branch: `git checkout -b feature/issue-${{ github.event.issue.number }}-[description]`
-            - Stage all changes: `git add .`
-            - Commit with descriptive message: `git commit -m "implement [feature description]"`
-            - Push branch to remote: `git push origin feature/issue-${{ github.event.issue.number }}-[description]`
-            - Verify operations with: `git status`, `git log --oneline -3`, `git branch`
+            **2. THEN: Commit and Push Changes (MANDATORY - DEVELOPMENT INCOMPLETE WITHOUT PUSH)**
+            After posting your development summary comment, you MUST use the github-operations agent:
+            - Launch the agent using Task tool with subagent_type="github-operations"
+            - The agent will create feature branch: `feature/issue-${{ github.event.issue.number }}-[description]`
+            - The agent will commit all changes with descriptive messages
+            - **CRITICAL: The agent MUST push to remote origin - local commits are NOT sufficient**
+            - The agent will verify all operations and show command outputs
+            - **FAILURE TO PUSH TO REMOTE = INCOMPLETE DEVELOPMENT STAGE**
 
             **3. FINALLY: Update Workflow State**
             Only after successfully committing and pushing changes, execute these commands:
@@ -243,18 +232,20 @@ jobs:
 
             First get current issue state with `mcp__github__get_issue`, then call `mcp__github__update_issue` with the updated labels list (keeping all non-workflow labels and adding review:develop).
 
-            ## Success Criteria (WITH MANDATORY VERIFICATION)
+            ## Success Criteria (WITH MANDATORY REMOTE PUSH VERIFICATION)
             - All specified requirements are implemented and working
             - All project tests pass using the project's test suite (with verification output shown)
             - Code follows the project's best practices and conventions
             - No breaking changes to existing functionality
-            - **Feature branch exists and is verified** (git branch output shown in comment)
-            - **Commits exist and are verified** (git log output shown in comment)
-            - **Changes pushed to remote repository** (git push successful and verified)
+            - **Feature branch exists BOTH locally AND on remote** (verified by github-operations agent)
+            - **Commits exist and are PUSHED TO REMOTE** (verified with git log and ls-remote)
+            - **CRITICAL: Changes MUST be pushed to remote repository - local only = FAILURE**
+            - **Remote branch MUST be confirmed with `git ls-remote --heads origin`**
             - **File changes are verified** (Read tool used to confirm changes written)
             - **Test results are verified** (actual test output shown, not assumed)
             - Implementation is complete with no placeholder code
             - All tasks from the task breakdown are completed
-            - **Development summary includes proof commands demonstrating all work was actually completed**
+            - **Development summary includes github-operations agent output proving remote push**
+            - **WITHOUT REMOTE PUSH = DEVELOPMENT STAGE FAILED**
 
             **Remember: This is the final implementation stage. Everything must be production-ready and fully tested before completion.**
