@@ -44,16 +44,15 @@ When users run `npx @truefrontier/claude-dev-workflow init`, the following are c
 
 ## Workflow Architecture
 
-### Current Stage Flow (v2)
+### Current Stage Flow (v3)
 1. **Specify** (`stage-specify.yml`) - Creates comprehensive specifications using GitHub spec-kit methodology
-2. **Plan** (`stage-plan.yml`) - Develops technical implementation plans
-3. **Tasks** - Implicit stage within Plan that creates numbered task breakdowns
-4. **Develop** (`stage-develop.yml`) - Implements code following approved specifications
+2. **Plan & Tasks** (`stage-plan.yml`) - Develops technical implementation plans AND detailed task breakdowns
+3. **Develop** (`stage-develop.yml`) - Implements code following approved specifications and tasks
 
 ### Workflow Files
 - `orchestrator.yml` - Main workflow controller, interprets human commands and manages state transitions
 - `stage-specify.yml` - Creates specifications with user stories and requirements
-- `stage-plan.yml` - Creates technical plans and task breakdowns (includes Tasks stage)
+- `stage-plan.yml` - Creates technical plans AND detailed task breakdowns in a single comprehensive stage
 - `stage-develop.yml` - Implements code with full testing and creates feature branches
 
 ## Key Behavioral Patterns

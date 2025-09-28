@@ -101,6 +101,8 @@ jobs:
 
             ### From review:* states
             - Human approves → Remove `review:X`, add next `needs:Y`, assign @claude-dev-truefrontier if user exists
+              - From review:specify → needs:plan
+              - From review:plan → needs:develop
             - Human requests changes → Remove `review:X`, add `needs:X-revision`, assign @claude-dev-truefrontier if user exists
             - Human wants to skip stages → Remove `review:X`, add appropriate `needs:Y`, assign @claude-dev-truefrontier if user exists
 
@@ -112,7 +114,7 @@ jobs:
             - Human says stop/unassign → Remove ALL workflow labels, unassign @claude-dev-truefrontier if assigned
 
             ## Stage Flow Order
-            1. `specify` → `plan` → `tasks` → `develop` (required full flow)
+            1. `specify` → `plan` → `develop` (required full flow)
             2. All stages are required and must be completed in sequence
             3. Each stage must be reviewed and approved by a human before proceeding to the next stage
 
