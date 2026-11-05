@@ -1,4 +1,4 @@
-# GitHub Claude Workflow System v2
+# GitHub Claude Workflow System
 
 An AI-powered development pipeline that successfully combines intelligent automation with human oversight. Transform GitHub issues into production-ready features through a systematic three-stage workflow based on the [GitHub spec-kit](https://github.com/github/spec-kit) methodology.
 
@@ -129,6 +129,16 @@ npx @truefrontier/claude-dev-workflow validate  # Check current configuration an
 npx @truefrontier/claude-dev-workflow labels --setup # Create workflow labels
 ```
 
+**Command options:**
+
+| Command | What it does |
+|---------|--------------|
+| `init --dry-run` | Shows what `init` would do without changing any files or GitHub settings |
+| `init --yes` (or `-y`) | Skips the prompts and uses the defaults for the detected project type |
+| `labels --list` | Lists the workflow labels and what each one means (this is also what plain `labels` does) |
+| `labels --setup` | Creates the workflow labels in the current repository, or updates them if they exist |
+| `labels --clean` | Deletes every workflow label from the current repository. Issues lose those labels too, so use it with care |
+
 ### 🎯 **Platform-Agnostic Design**
 The workflow system automatically detects and adapts to your project:
 - **Node.js**: Reads `package.json`, detects React/Vue/Angular/Express
@@ -150,9 +160,10 @@ The workflow system automatically detects and adapts to your project:
 
 The `init` command installs:
 - **4 Workflow files** in `.github/workflows/` - Orchestrator + 3 stage workflows (Specify, Plan, Develop)
-- **6 Agent configurations** in `.claude/agents/` - Specialized Claude Code agents for codebase analysis
+- **7 Agent configurations** in `.claude/agents/` - Specialized Claude Code agents for codebase analysis, research, and GitHub operations
 - **Setup scripts** in `scripts/` - Label creation and validation utilities
-- **CLAUDE.md** - Project guidance file for AI context
+
+`init` does not create a `CLAUDE.md` in your repository. If you want one for project context, add it yourself (Claude Code's `/init` command can generate a starting point).
 
 ### Alternative: Manual Installation
 If you prefer manual setup or need customization:
@@ -183,6 +194,8 @@ Each workflow can be customized by modifying:
 ### Scripts
 - **`scripts/setup-labels.sh`**: Unix/Linux/macOS label setup script
 - **`scripts/setup-labels.bat`**: Windows label setup script
+- **`scripts/setup-help.js`**: Prints the setup guide and prerequisites (`npm run setup:help`)
+- **`scripts/validate-workflows.js`**: Checks the workflow files in `./workflows/` for common problems (`npm run validate:workflows`). Run it from the repository root
 
 ### npm Scripts
 Comprehensive tooling for setup, validation, and maintenance:
@@ -206,6 +219,20 @@ gh secret list             # Confirm ANTHROPIC_API_KEY is configured
 - **Missing repository permissions**: Ensure admin access for secrets/collaborators
 - **API key invalid**: Verify key works at console.anthropic.com
 - **Workflow files not copied**: Check `.github/workflows/` directory exists
+
+## Developing This Package
+
+To work on the CLI itself, clone this repository and run these from its root:
+
+```bash
+npm ci                          # Install dependencies
+node test-cli.js                # Smoke-test the CLI: --version, help, labels --list, validate
+npm run validate:workflows      # Check the workflow files in ./workflows/
+shellcheck scripts/setup-labels.sh  # Lint the Unix label script
+node bin/cli.js init --dry-run  # Preview an install without changing anything
+```
+
+In `test-cli.js`, the `validate` check counts as a pass whether it succeeds or fails, because it needs a fully set-up GitHub repository. Use `node bin/cli.js validate` directly to see its real result.
 
 ## Security & Technical Design
 
