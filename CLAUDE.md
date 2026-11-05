@@ -13,6 +13,8 @@ This repository provides an npm package that installs a GitHub Actions workflow 
 node bin/cli.js init --dry-run     # Test installation without making changes
 node bin/cli.js validate           # Validate workflow configurations
 node bin/cli.js help               # Show comprehensive help
+node test-cli.js                   # Smoke-test the CLI commands
+shellcheck scripts/setup-labels.sh # Lint the Unix label script
 
 # Publishing updates
 npm version patch                  # Increment version
@@ -67,17 +69,15 @@ This prevents race conditions where workflows trigger before assignment.
 Every stage workflow MUST post a comment with results. Comments are automatically generated from the Claude response content.
 
 ### Stage Transitions
-- **From no labels**: Human mentions @claude-dev-truefrontier → `needs:triage`
+- **From no labels**: Human mentions @claude-dev-truefrontier → `needs:specify`
 - **From review states**: Human approval → next `needs:*` stage  
 - **From error states**: Human retry → `needs:*-revision`
 - **Stop command**: Remove all labels and unassign bot
 
 ### Tools and Permissions
-Each stage has specific tool allowlists:
-- **Triage**: Basic file operations, GitHub issue management
-- **Spec**: Adds BDD-Gherkin-Writer agent access
-- **Architect**: Adds engineer agent for technical design
-- **Develop**: Full development tools including git, composer, npm, file editing
+Each stage has its own `--allowedTools` list in its workflow file:
+- **Specify** and **Plan**: Read-only file tools (Read, Glob, Grep), web research (WebFetch, WebSearch), Task, TodoWrite, and GitHub issue tools (get issue, get comments, add comment, update issue). No file edits and no shell.
+- **Develop**: Adds Bash (including git), Edit, MultiEdit, Write, and GitHub tools for branches, files, pushes, and pull requests
 
 ### Branch Management
 Development stage automatically creates feature branches with pattern:
